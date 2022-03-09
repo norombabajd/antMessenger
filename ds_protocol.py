@@ -13,7 +13,7 @@ import json
 from collections import namedtuple
 
 # Namedtuple to hold the values retrieved from json messages.
-DataTuple = namedtuple('DataTuple', ['response','type'])
+DataTuple = namedtuple('DataTuple', ['response','type', 'messages'])
 
 def join(username:str, password:str) -> str:
     '''
@@ -55,14 +55,13 @@ def send(user_token:str, entry:dict):
   """ Send a directmessage to another DS user. """
   return encode_json(f'{{"token":{user_token}, "directmessage": {entry}}}')
 
-def all(user_token):
-  """ Request all messages from DS server. """
-  return encode_json(f'{{"token":"{user_token}", "directmessage": "all"}}')
-
 def new(user_token):
   """ Request unread message from the DS server. """
   return encode_json(f'{{"token":"{user_token}", "directmessage": "new"}}')
 
+def all(user_token):
+  """ Request all messages from DS server. """
+  return encode_json(f'{{"token":"{user_token}", "directmessage": "all"}}')
 
 def update_bio(user_token:str, bio:str) -> str:
   '''
