@@ -1,19 +1,16 @@
 # John Daniel Norombaba
 # jnoromba@uci.edu
 # 91483000
-
+#
 # Audrey Nguyen
 # audrehn3@uci.edu
 # 50253773
-
+#
 # ds_messenger.py
-# Contains the send() function, communicates with DSU servers.
-import time
-import socket
-from types import NoneType
-import ds_protocol
-from Profile import Post
 
+import socket, time
+import ds_protocol
+from ds_protocol import DSProtocolError
 
 class DirectMessage:
   def __init__(self):
@@ -21,96 +18,98 @@ class DirectMessage:
     self.message = None
     self.timestamp = None
 
+class DirectMessengerError(Exception):
+  """Encapsulates socket and json related errors."""
+  pass
+
 class DirectMessenger:
+  """Enables peer to peer communication over a compatible dsuserver."""
   def __init__(self, dsuserver=None, username=None, password=None):
-    self.token = None
-    self.dsuserver = dsuserver
-    self.username = username
-    self.password = password
+    self.token:str = None
+    self.dsuserver:str = dsuserver
+    self.username:str = username
+    self.password:str = password
 	
-  def get_token(self):
-    """
-    Function to join server and get the token if successful.
-    """
-    # Create the client, with a default time-out value of 3 seconds.
+  def _communicate(self, protocol:bytes):
+    """Communicates with a dsuserver, sending each function's respective protocol."""
     try:
+      # Establish a connection over the internet and send.
       socket.setdefaulttimeout(3)
       client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      client.connect(("168.235.86.101", 3021))
-      client.send(ds_protocol.join(self.username, self.password))
-      server = ds_protocol.extract_json(client.recv(4096))
-      # Retrieve user_token by sending the join protocol.
-      self.token = server.response['token']
-      return True
+      client.connect((self.dsuserver, 3021))
+      client.send(protocol)
+      # Return the server's response.
+      return ds_protocol.extract_json(client.recv(4096))
     except socket.error or socket.timeout:
-      # If the socket fails to connect to the server.  
-      return False
-    except KeyError or ValueError:
-      # Assume all other cases are errors.
-      client.close()
-      return False
+      # Handle communication errors with socket.
+      raise DirectMessengerError("There was a problem communicating with the DSU Server.")
+    except TypeError:
+      # Handle client.connect() attempting to connect to a NoneType IP address.
+      raise DirectMessengerError("Your profile does not contain a dsuserver to connect to.")
+    except DSProtocolError:
+      raise DirectMessengerError("There was a problem interpreting the data retrieved.")
+
+  def _validate(self, protocol:str, data:tuple):
+    """Ensures data returned from server follows dsuserver protocol."""
+    try:
+      if protocol in data.response and data.type == 'ok':
+        # Check for specific data in a response (ex: 'messages', 'token').
+        return data
+      elif protocol == 'send' and data.type == 'ok':
+        # Check for an 'ok' after sending a message.
+        return data
+      else:
+        # If data is mismatched.
+        raise DirectMessengerError("The data returned from the server cannot be interpreted.")
+    except:
+      # If returned data does not follow protocol.
+      raise DirectMessengerError("The data returned from the server cannot be interpreted.")
+  
+  def _login(self):
+    """ Retrieves user token if none is present. """
+    if self.token != None:
+      return
+    try:
+      data = self._communicate(ds_protocol.join(self.username, self.password))
+      self._validate('token', data)
+      self.token = data.response['token']
+    except DirectMessengerError as dme:
+      print(dme)
+    except DSProtocolError as dpe:
+      print(dpe)
 
   def send(self, message:str, recipient:str) -> bool:
-    self.get_token() if self.token == None else None
-    # {"token":"user_token", "directmessage": {"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}}
-    # entry = {"entry": message,"recipient":recipient, "timestamp": "1603167689.3928561"}
-    # returns true if message successfully sent, false if send failed.
-    p = Post()
-    timestamp = p.get_time()
-    entry = f'{{"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": {{"entry": "Hello!","recipient":"aud", "timestamp": {timestamp}}}}}'
     try:
-      socket.setdefaulttimeout(3)
-      client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      client.connect(("168.235.86.101", 3021))
-      client.send(entry.encode('utf-8'))
-      server = ds_protocol.extract_json(client.recv(4096))
-      if server.type == 'ok':
-        return True
-      else:
-        return False
-    except socket.error or socket.timeout:
-      # If the socket fails to connect to the server.  
-      return False
-    except KeyError or ValueError:
-      # Assume all other cases are errors.
-      client.close()
-      return False
-		
-  def retrieve_new(self) -> list:
-    self.get_token() if self.token == None else None
-    # returns a list of DirectMessage objects containing all new messages
-    try:
-      socket.setdefaulttimeout(3)
-      client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      client.connect(("168.235.86.101", 3021))
-      client.send(ds_protocol.new(self.token))
-      server = ds_protocol.extract_json(client.recv(4096))
-      return server.response['message']
-    except socket.error or socket.timeout:
-      # If the socket fails to connect to the server.  
-      return False
-    except KeyError or ValueError:
-      # Assume all other cases are errors.
-      client.close()
-      return False
- 
-  def retrieve_all(self) -> list:
-    self.get_token() if self.token == None else None
-    # returns a list of DirectMessage objects containing all messages
-    try:
-      socket.setdefaulttimeout(3)
-      client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      client.connect(("168.235.86.101", 3021))
-      client.send(ds_protocol.new(self.token))
-      server = ds_protocol.extract_json(client.recv(4096))
-      return server.response['messages']
-    except socket.error or socket.timeout:
-    # If the socket fails to connect to the server.  
-      return False
-    except KeyError or ValueError:
-    # Assume all other cases are errors.
-      client.close()
+      self._login()
+      entry = f'{{"entry": "{message}", "recipient": "{recipient}", "timestamp": {time.time()}}}'
+      response = self._communicate(ds_protocol.send(self.token, entry))
+      self._validate('send', response)
+    except DirectMessengerError as dme:
+      print(dme)
+    except DSProtocolError as dpe:
+      print(dpe)
 
+  def retrieve_new(self) -> list:
+    try:
+      self._login()
+      data = self._communicate(ds_protocol.new(self.token))
+      self._validate('messages', data)
+      return data.messages
+    except DirectMessengerError as dme:
+      print(dme)
+    except DSProtocolError as dpe:
+      print(dpe)
+
+  def retrieve_all(self) -> list:
+    try:
+      self._login()
+      data = self._communicate(ds_protocol.all(self.token))
+      self._validate('messages', data)
+      return data.messages
+    except DirectMessengerError as dme:
+      print(dme)
+    except DSProtocolError as dpe:
+      print(dpe)
   
   
 if __name__ == "__main__":
@@ -119,11 +118,11 @@ if __name__ == "__main__":
 
   d.username = "johndanieln"
   d.password = "zotzot9148"
+  d.dsuserver = '168.235.86.101'
   
   d2.username = "aud"
   d2.password = "aud1234"
-  
-  for i in range(5):
-    d.send("Hello2!", "aud")
+  d2.dsuserver = '168.235.86.101'
 
-  d2.retrieve_all()
+  print(d.retrieve_new())
+  print(d.retrieve_all())
