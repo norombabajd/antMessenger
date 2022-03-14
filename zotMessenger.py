@@ -75,10 +75,10 @@ class Body(tk.Frame):
         for msg in thread:
             self.messages_view.tag_configure(tagName='spacing3', spacing3=5)
             if 'recipient' in msg:
-                self.messages_view.insert('end', f"{self._username}: {msg['entry']}", ('spacing3'))
+                self.messages_view.insert('end', f"{self._username}: {msg['entry']}", ('spacing3', 'justify'))
                 self.messages_view.insert('end', "\n")
             if 'from' in msg:
-                self.messages_view.insert('end', f"{user}: {msg['message']}", ('spacing3'))
+                self.messages_view.insert('end', f"{user}: {msg['message']}", ('spacing3', 'justify'))
                 self.messages_view.insert('end', "\n")
         self.messages_view.configure(state=tk.DISABLED)
         self.messages_view.update()
