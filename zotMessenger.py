@@ -8,11 +8,15 @@
 #
 # zotMessenger.py
 
+# TODO: Replace Post with Message
+#       Update functions to reflect those changes (posts_tree -> thread_tree)
+#       Figure out indexing with new data structures, Messages are different from Posts.
 
 import tkinter as tk
 from tkinter import TclError, ttk, filedialog
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_client import send
+import copy 
 
 class Body(tk.Frame):
     """ A subclass of tk.Frame that is responsible for drawing all of the widgets 
@@ -23,11 +27,8 @@ class Body(tk.Frame):
         tk.Frame.__init__(self, root)
         self.root = root
         self._select_callback = select_callback
-
-        # a list of the Post objects available in the active DSU file
-        # self._posts = [Post]
-        self._threads = [Message]
-        
+        self._username = ""
+        self._threads = {}
         # After all initialization is complete, call the _draw method to pack the widgets
         # into the Body instance 
         self._draw()
@@ -37,12 +38,13 @@ class Body(tk.Frame):
         Update the messages_view with the full post entry when the corresponding node in the posts_tree
         is selected.
         """
-        index = self.posts_tree.selection()[0]
-        # Translate tk's text indices to integer values.
-        index = -1 if index == 'end' else int(index) if index.isnumeric() else index
-        entry = self._posts[index].entry
-        self.set_text_entry(entry)
-    
+        self.messages_view.configure(state=tk.NORMAL)
+        self.messages_view.delete('0.0', 'end')
+        self.messages_view.configure(state=tk.DISABLED)
+        user = self.posts_tree.item(self.posts_tree.selection()[0], option='text')
+        thread = self._threads[user]
+        self.populate_thread(thread, user)
+
     def get_text_entry(self) -> str:
         """
         Returns the text that is currently displayed in the messages_view widget.
@@ -60,22 +62,38 @@ class Body(tk.Frame):
         self.messages_view.configure(state=tk.DISABLED)
         self.messages_view.update()
 
-    def set_posts(self, posts:list):
-        """
-        Populates the self._posts attribute with posts from the active DSU file.
-        """
 
-        self._posts = posts                
-        for id, post in enumerate(posts):
-            self._insert_post_tree(id, post)
+    def set_threads(self, username, threads:dict):
+        """ Populates self._posts with conversations from the active Profile. """
+        self._username = username
+        self._threads = threads
+        for id, user in enumerate(self._threads):
+            self.posts_tree.insert('', id, id, text=user)
+    
+    def populate_thread(self, thread:list, user):
+        self.messages_view.configure(state=tk.NORMAL)
+        for msg in thread:
+            self.messages_view.tag_configure(tagName='spacing3', spacing3=5)
+            if 'recipient' in msg:
+                self.messages_view.insert('end', f"{self._username}: {msg['entry']}", ('spacing3'))
+                self.messages_view.insert('end', "\n")
+            if 'from' in msg:
+                self.messages_view.insert('end', f"{user}: {msg['message']}", ('spacing3'))
+                self.messages_view.insert('end', "\n")
+        self.messages_view.configure(state=tk.DISABLED)
+        self.messages_view.update()
+            
+            
+        
 
-    def insert_post(self, post: Post):
+    '''def insert_post(self, post: Message):
         """
         Inserts a single post to the post_tree widget.
+        TODO: CHANGE TO INSERT NEW CONVERSATION?
         """
         self._posts.append(post)
         id = len(self._posts) - 1 #adjust id for 0-base of treeview widget
-        self._insert_post_tree(id, post)
+        self._insert_post_tree(id, post)'''
 
     def reset_ui(self):
         """
@@ -84,21 +102,9 @@ class Body(tk.Frame):
         """
         self.set_text_entry("")
         self.messages_view.configure(state=tk.NORMAL)
-        self._posts = []
+        self._threads = {}
         for item in self.posts_tree.get_children():
             self.posts_tree.delete(item)
-
-    def _insert_post_tree(self, id, post: Post):
-        """
-        Inserts a post entry into the posts_tree widget.
-        """
-        entry = post.entry
-        # Since we don't have a title, we will use the first 24 characters of a
-        # post entry as the identifier in the post_tree widget.
-        if len(entry) > 25:
-            entry = entry[:24] + "..."
-        
-        self.posts_tree.insert('', id, id, text=entry)
     
     def _draw(self):
         """
@@ -231,12 +237,15 @@ class MainApp(tk.Frame):
             self.profile_filename = filename.name
             self._current_profile = Profile()
             self._current_profile.load_profile(self.profile_filename)
+            self.body.set_threads(self._current_profile.username, self._current_profile.get_conversations())
             # Update the UI.
-            self.body.set_posts(self._current_profile.get_posts())
+            print(self._current_profile.get_conversations())
+            print()
+            """
             self.footer.send_btn.configure(state=tk.NORMAL)
             self.footer.new_btn.configure(state=tk.NORMAL)
             self.body.entry_editor.configure(state=tk.NORMAL)
-            self.footer.set_status(f"Welcome back.")
+            self.footer.set_status(f"Welcome back.")"""
             # Set changes.
             self.update()
         except AttributeError:
