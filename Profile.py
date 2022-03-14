@@ -97,8 +97,11 @@ class Profile:
                 self._conversations[msg['from']] = []
             self._conversations[msg['from']].append(msg)
 
-    def get_conversation(self) -> dict[Message]:
+    def get_conversations(self) -> dict[Message]:
         return self._conversations
+    
+    def get_thread(self, user) -> list[Message]:
+        return self._conversations[user]
 
     def dispose_conversation(self, recipient:str) -> None:
         if recipient in self._conversations:
@@ -136,7 +139,7 @@ class Profile:
                             msg = Message(convo['recipient'], convo['entry'], convo['timestamp'])
                             self._conversations[user].append(msg)
                         elif 'from' in convo:
-                            self._conversations[user].append(msg)
+                            self._conversations[user].append(convo)
                 f.close()
             except Exception as ex:
                 raise DsuProfileError(ex)
