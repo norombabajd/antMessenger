@@ -84,10 +84,13 @@ class DirectMessenger:
       entry = f'{{"entry": "{message}", "recipient": "{recipient}", "timestamp": {time.time()}}}'
       response = self._communicate(ds_protocol.send(self.token, entry))
       self._validate('send', response)
+      return True
     except DirectMessengerError as dme:
       print(dme)
+      return False
     except DSProtocolError as dpe:
       print(dpe)
+      return False
 
   def retrieve_new(self) -> list:
     try:

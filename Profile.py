@@ -107,6 +107,9 @@ class Profile:
         if recipient in self._conversations:
             del self._conversations[recipient]
 
+    def add_contact(self, contact):
+        self._conversations.update({contact: []})
+
     def save_profile(self, path: str) -> None:
         p = Path(path)
 

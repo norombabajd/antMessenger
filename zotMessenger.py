@@ -16,7 +16,9 @@ import tkinter as tk
 from tkinter import TclError, ttk, filedialog
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_client import send
-import copy 
+import copy
+
+from ds_messenger import DirectMessenger 
 
 class Body(tk.Frame):
     """ A subclass of tk.Frame that is responsible for drawing all of the widgets 
@@ -28,6 +30,7 @@ class Body(tk.Frame):
         self.root = root
         self._select_callback = select_callback
         self._username = ""
+        self._contact = ""
         self._threads = {}
         # After all initialization is complete, call the _draw method to pack the widgets
         # into the Body instance 
@@ -38,78 +41,72 @@ class Body(tk.Frame):
         Update the messages_view with the full post entry when the corresponding node in the posts_tree
         is selected.
         """
-        self.messages_view.configure(state=tk.NORMAL)
-        self.messages_view.delete('0.0', 'end')
-        self.messages_view.configure(state=tk.DISABLED)
-        user = self.posts_tree.item(self.posts_tree.selection()[0], option='text')
-        thread = self._threads[user]
-        self.populate_thread(thread, user)
+        self.clear_message_view()
+        self._contact = self.posts_tree.item(self.posts_tree.selection()[0], option='text')
+        thread = self._threads[self._contact]
+        self.populate_thread(thread)
 
     def get_text_entry(self) -> str:
         """
         Returns the text that is currently displayed in the messages_view widget.
         """
+        self.messages_view.configure(state=tk.NORMAL)
         return self.messages_view.get('1.0', 'end').rstrip()
-
-    def set_text_entry(self, text:str):
+        
+    def clear_text_entry(self):
         """
         Sets the text to be displayed in the messages_view widget.
         NOTE: This method is useful for clearing the widget, just pass an empty string.
         """
+        self.entry_editor.delete('0.0', 'end')
+
+    def clear_message_view(self):
         self.messages_view.configure(state=tk.NORMAL)
-        self.messages_view.tag_configure(tagName='spacing3', spacing3=5)
-        self.messages_view.insert('end', f"[johndaniel]: {text}", ('spacing3'))
+        self.messages_view.delete('0.0', 'end')
         self.messages_view.configure(state=tk.DISABLED)
+
+    def insert_msg(self, text:str, tag:str):
+        """ 
+        Insert a sent or recieved message in message_view.
+        :text: Text to be inserted, derived from a Message or dict.
+        :tag: 'sent' or 'recieved', respectivly aligns text left or right.
+
+        """
+        self.messages_view.configure(state=tk.NORMAL)
+        self.messages_view.insert('end', text, (tag))
+        self.messages_view.insert('end', "\n")
+        self.messages_view.configure(state=tk.DISABLED)
+
+    def populate_thread(self, thread:list):
+        """ Populates thread with entries and messages. """
+        for msg in thread:
+            if 'recipient' in msg:
+                self.insert_msg(msg['entry'], 'sent')
+            if 'from' in msg:
+                self.insert_msg(msg['message'], 'recieved')
         self.messages_view.update()
-
-
-    def set_threads(self, username, threads:dict):
+    
+    def populate_thread_tree(self, username, threads:dict):
         """ Populates self._posts with conversations from the active Profile. """
         self._username = username
         self._threads = threads
         for id, user in enumerate(self._threads):
-            self.posts_tree.insert('', id, id, text=user)
-    
-    def populate_thread(self, thread:list, user):
-        self.messages_view.configure(state=tk.NORMAL)
-        for msg in thread:
-            self.messages_view.tag_configure(tagName='spacing3', spacing3=5)
-            if 'recipient' in msg:
-                self.messages_view.insert('end', f"{self._username}: {msg['entry']}", ('spacing3', 'justify'))
-                self.messages_view.insert('end', "\n")
-            if 'from' in msg:
-                self.messages_view.insert('end', f"{user}: {msg['message']}", ('spacing3', 'justify'))
-                self.messages_view.insert('end', "\n")
-        self.messages_view.configure(state=tk.DISABLED)
-        self.messages_view.update()
-            
-            
-        
-
-    '''def insert_post(self, post: Message):
-        """
-        Inserts a single post to the post_tree widget.
-        TODO: CHANGE TO INSERT NEW CONVERSATION?
-        """
-        self._posts.append(post)
-        id = len(self._posts) - 1 #adjust id for 0-base of treeview widget
-        self._insert_post_tree(id, post)'''
+            self.posts_tree.insert('', id, id, text=user)    
 
     def reset_ui(self):
         """
         Resets all UI widgets to their default state. Useful for when clearing the UI is neccessary such
         as when a new DSU file is loaded, for example.
         """
-        self.set_text_entry("")
+        self.clear_message_view()
+        self.clear_text_entry()
         self.messages_view.configure(state=tk.NORMAL)
         self._threads = {}
         for item in self.posts_tree.get_children():
             self.posts_tree.delete(item)
     
     def _draw(self):
-        """
-        Call only once upon initialization to add widgets to the frame
-        """
+        """ Call only once upon initialization to add widgets to the frame. """
         posts_frame = tk.Frame(master=self, width=250)
         posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
         self.posts_tree = ttk.Treeview(posts_frame, show=('tree'))
@@ -130,6 +127,8 @@ class Body(tk.Frame):
 
         self.messages_view = tk.Text(editor_frame, width=0, state=tk.DISABLED)
         self.messages_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
+        self.messages_view.tag_configure(tagName='sent', justify='left')
+        self.messages_view.tag_configure(tagName='recieved', justify='right')
 
         messages_view_scrollbar = tk.Scrollbar(master=scroll_frame, command=self.messages_view.yview)
         self.messages_view['yscrollcommand'] = messages_view_scrollbar.set
@@ -140,44 +139,38 @@ class Footer(tk.Frame):
     A subclass of tk.Frame that is responsible for drawing all of the widgets
     in the footer portion of the root frame.
     """
-    def __init__(self, root, save_callback=None, add_callback=None):
-        """
-        Initializes root, save_callback, and online_callback class attributes.
-        """
+    def __init__(self, root, send_callback=None, add_callback=None):
+        """ Initializes root, send_callback, and online_callback class attributes. """
         tk.Frame.__init__(self, root)
         self.root = root
-        self._save_callback = save_callback
+        self._send_callback = send_callback
         self._add_callback = add_callback
         self.is_online = tk.IntVar()
         self._draw()
         
-    def save_click(self):
+    def send_click(self):
         """
-        Calls the callback function specified in the save_callback class attribute, if
+        Calls the callback function specified in the send_callback class attribute, if
         available, when the save_button has been clicked.
         """
-        if self._save_callback is not None:
-            self._save_callback()
+        if self._send_callback is not None:
+            self._send_callback()
     
     def add_click(self):
         """
-        Calls the callback function specified in the save_callback class attribute, if
+        Calls the callback function specified in the add_callback class attribute, if
         available, when the save_button has been clicked.
         """
         if self._add_callback is not None:
             self._add_callback()
 
     def set_status(self, message):
-        """
-        Updates the text that is displayed in the footer_label widget
-        """
+        """ Updates the text that is displayed in the footer_label widget. """
         self.footer_label.configure(text=message)        
 
     def _draw(self):
-        """
-        Call only once upon initialization to add widgets to the frame
-        """
-        self.send_btn = tk.Button(master=self, text="Send", width=5, command=self.save_click, state=tk.DISABLED)
+        """ Call only once upon initialization to add widgets to the frame. """
+        self.send_btn = tk.Button(master=self, text="Send", width=5, command=self.send_click, state=tk.DISABLED)
         self.send_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=15, pady=5)
 
         self.new_btn = tk.Button(master=self, text="New Conversation", width=12, command=self.add_click, state=tk.DISABLED)
@@ -203,15 +196,14 @@ class MainApp(tk.Frame):
 
         # Initialize a new NaClProfile and assign it to a class attribute.
         self._current_profile = Profile()
+        self._messenger = DirectMessenger()
 
         # After all initialization is complete, call the _draw method to pack the widgets
         # into the root frame
         self._draw()
 
     def new_profile(self):
-        """
-        Creates a new DSU file when the 'New' menu item is clicked.
-        """
+        """ Creates a new DSU file when the 'New' menu item is clicked. """
         try:
             filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')])
             self.profile_filename = filename.name
@@ -235,17 +227,16 @@ class MainApp(tk.Frame):
         try:
             # Open and load the profile.
             self.profile_filename = filename.name
-            self._current_profile = Profile()
             self._current_profile.load_profile(self.profile_filename)
-            self.body.set_threads(self._current_profile.username, self._current_profile.get_conversations())
+            self._messenger.dsuserver = self._current_profile.dsuserver
+            self._messenger.username = self._current_profile.username
+            self._messenger.password = self._current_profile.password
+            self.body.populate_thread_tree(self._current_profile.username, self._current_profile.get_conversations())
             # Update the UI.
-            print(self._current_profile.get_conversations())
-            print()
-            """
             self.footer.send_btn.configure(state=tk.NORMAL)
             self.footer.new_btn.configure(state=tk.NORMAL)
             self.body.entry_editor.configure(state=tk.NORMAL)
-            self.footer.set_status(f"Welcome back.")"""
+            self.footer.set_status(f"Welcome back.")
             # Set changes.
             self.update()
         except AttributeError:
@@ -260,40 +251,66 @@ class MainApp(tk.Frame):
             self.footer.set_status("Corrupted or unsupported Profile.")
 
     def close(self):
-        """
-        Closes the program when the 'Close' menu item is clicked.
-        """
+        """ Closes the program when the 'Close' menu item is clicked. """
         self.root.destroy()
 
-    def save_profile(self):
-        """
-        Saves the text currently in the messages_view widget to the active DSU file.
-        """
+    def send_message(self):
+        """ Saves the text currently in the messages_view widget to the active DSU file. """
+        message = self.body.entry_editor.get('0.0', 'end').rstrip()
         
-        self.body.set_text_entry(self.body.entry_editor.get('0.0', 'end'))
+        """if self._messenger.send(entry, self.body._contact):
+            self.body.insert_msg(entry, 'sent')
+            self._current_profile.store_sent(Message(self.body._contact, message))
+            self._current_profile.save_profile(self.profile_filename)
+            self.footer.set_status("Message sent!")
+            self.body.clear_text_entry()
+        else:
+            self.footer.set_status("There was a problem, check your internet connection.")"""
+        
+        self._current_profile.store_sent(Message(self.body._contact, message))
+        self._current_profile.save_profile(self.profile_filename)
+        self.footer.set_status("Message sent!")
+        self.body.insert_msg(message, 'sent')
+        self.body.clear_text_entry()
         self.update()
-    
 
     def new_conversation(self):
+        """ Creates a new window to add a new contact. """
         add_window = tk.Toplevel(self)
 
-        self.user = tk.Text(add_window, width=0, height=1)
-        self.user.pack(fill=tk.BOTH, side=tk.TOP, expand=False, padx=10, pady=10)
+        self.info = tk.Label(master=add_window, text="Enter their username below!", justify='center')
+        self.info.pack(fill=tk.BOTH, side=tk.TOP, padx=10, pady=10)
+        
+        self.add = tk.Button(add_window, text="Add Anteater", width=5, command=self.add_user)
+        self.add.pack(fill=tk.BOTH, side=tk.BOTTOM, padx=5, pady=5)
 
-        self.add = tk.Button(add_window, width=5, height=5)
-        self.add.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=True, padx=10, pady=10)
+        self.user = tk.Text(add_window, width=0, height=1,)
+        self.user.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=10, pady=5)
 
         add_window.title("New Conversation")
-        add_window.geometry("360x100")
+        add_window.geometry("300x115")
         add_window.option_add('*tearOff', False)
 
+        add_window.update()
+        add_window.minsize(add_window.winfo_width(), add_window.winfo_height())
+        add_window.maxsize(add_window.winfo_width(), add_window.winfo_height())
 
+    def add_user(self):
+        """ Obtains name of contact from user, creates a new profile, & adds to treeview. """
+        try:
+            new_contact = self.user.get('0.0', 'end').rstrip()
+            self._current_profile.add_contact(new_contact)
+            self._current_profile.save_profile(self.profile_filename)
+            self.footer.set_status("Ready.")
+        except AttributeError:
+            # Inform the user when they cancel profile creation.
+            self.footer.set_status("Profile creation aborted.")
 
+        self.body.posts_tree.insert('', 'end', 'end', text=new_contact)
+        self.body.update()
 
     def _draw(self):
-        """
-        Call only once, upon initialization to add widgets to root frame
-        """
+        """ Call only once, upon initialization to add widgets to root frame. """
         # Build a menu and add it to the root frame.
         menu_bar = tk.Menu(self.root)
         self.root['menu'] = menu_bar
@@ -307,7 +324,7 @@ class MainApp(tk.Frame):
         self.body = Body(self.root, self._current_profile)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
 
-        self.footer = Footer(self.root, save_callback=self.save_profile, add_callback=self.new_conversation)
+        self.footer = Footer(self.root, send_callback=self.send_message, add_callback=self.new_conversation)
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
 
 if __name__ == "__main__":
