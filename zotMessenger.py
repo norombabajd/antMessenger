@@ -15,8 +15,7 @@
 import tkinter as tk
 from tkinter import TclError, ttk, filedialog
 from Profile import Profile, Message, DsuFileError, DsuProfileError
-from ds_client import send
-import copy
+from ds_messenger import DirectMessenger
 
 from ds_messenger import DirectMessenger 
 
