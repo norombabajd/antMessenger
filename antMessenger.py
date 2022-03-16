@@ -324,7 +324,7 @@ class antMessenger(tk.Frame):
         self.user.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=10, pady=5)
 
         add_window.title("New Conversation")
-        add_window.geometry("300x115")
+        add_window.geometry("300x200")
         add_window.option_add('*tearOff', False)
 
         add_window.update()
@@ -339,6 +339,7 @@ class antMessenger(tk.Frame):
 
             if new_contact.split() != 0:
                 self._current_profile.add_contact(new_contact)
+                self.body._threads.update({new_contact:[]})
                 self._current_profile.save_profile(self.profile_filename)
                 self.footer.set_status("Ready.")
         except AttributeError:
