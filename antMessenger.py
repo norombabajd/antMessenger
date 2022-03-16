@@ -20,6 +20,7 @@
 
 import tkinter as tk
 from tkinter import TclError, ttk, filedialog
+from turtle import back
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_messenger import DirectMessenger, DirectMessengerError
 
@@ -66,12 +67,7 @@ class Body(tk.Frame):
         Insert a sent or recieved message in message_view.
         
         :text: Text to be inserted, derived from a Message or dict.
-<<<<<<< HEAD:antMessenger.py
         :tag: 'sent' or 'recieved', respectivly aligns text left or right.
-=======
-        :tag: 'sent', 'recieved', or 'welcome' respectivly aligns text left, right, or center.
-
->>>>>>> 65da7d6cd6a6ed29dd29d09745ac81b123ff3912:zotMessenger.py
         """
         # Enabling messages_view is required to perform changes to the widget.
         self.messages_view.configure(state=tk.NORMAL)
@@ -113,7 +109,7 @@ class Body(tk.Frame):
         self._threads = {}
         for item in self.posts_tree.get_children():
             self.posts_tree.delete(item)
-
+    
     anteater = """
        _.---._    /\\\\
     ./'       "--'\//
@@ -122,8 +118,8 @@ class Body(tk.Frame):
 ./  / /\ \   | \ \  \ \\
    / /  \ \  | |\ \  \\7
 "     "    "  "
-    """
-    
+        """
+
     def _draw(self):
         """ Add widgets to the frame upon initialization, call only once."""
         self.posts_frame:tk.Frame = tk.Frame(master=self, width=250)
@@ -162,27 +158,19 @@ class Body(tk.Frame):
         
         self.messages_view.tag_configure(tagName='sent', justify='right')
         self.messages_view.tag_configure(tagName='recieved', justify='left')
-<<<<<<< HEAD:antMessenger.py
         self.messages_view.tag_configure(tagName='heading', justify='center')
-        
-        self.insert_msg("\nWelcome! Let's get started.\nOpen or create a profile by navigating to File in the menu bar.", 'heading')
+
+        self.insert_msg(f"\nWelcome to antMessenger! Let's get started.\nOpen or create a profile by navigating to File in the menu bar.\n\n{self.anteater}", 'heading')
 
         self.messages_view_scrollbar:tk.Scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.messages_view.yview)
         """INSERT DESCRIPTION HERE."""
-=======
-        self.messages_view.tag_configure(tagName='welcome', justify='center')
-        self.insert_msg("Welcome Let's get started.\n", 'welcome')
-        self.insert_msg("Open or create a profile by navigating to File in the menu bar.\n", 'welcome')
-        self.insert_msg(self.anteater, 'welcome')
-        self.messages_view_scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.messages_view.yview)
->>>>>>> 65da7d6cd6a6ed29dd29d09745ac81b123ff3912:zotMessenger.py
         self.messages_view['yscrollcommand'] = self.messages_view_scrollbar.set
         self.messages_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
 
 class Footer(tk.Frame):
     """A subclass of tk.Frame that draws widgets in the footer portion of the root frame."""
     def __init__(self, root, send_callback=None, add_callback=None, mode_callback=None):
-        """ Initializes root, send_callback, add_callback, mode_callback, is_online, and is_light class attributes. """
+        """ Initializes root, send_callback, add_callback, mode_callback, is_online, and light_mode class attributes. """
         tk.Frame.__init__(self, root)
         self.root = root
         self._send_callback = send_callback
@@ -190,7 +178,7 @@ class Footer(tk.Frame):
         self._mode_callback = mode_callback
         self.is_online:tk.IntVar = tk.IntVar()
         """INSERT DESCRIPTION HERE."""
-        self.is_light:tk.IntVar = tk.IntVar()
+        self.light_mode:tk.IntVar = tk.IntVar()
         """INSERT DESCRIPTION HERE."""
         self._draw()
         
@@ -221,7 +209,7 @@ class Footer(tk.Frame):
         self.new_btn = tk.Button(master=self, text="New Conversation", width=15, command=self.add_click, state=tk.DISABLED)
         self.new_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
-        self.mode_btn = tk.Button(master=self, text="Change Mode", width=15, command=self.mode_click, state=tk.DISABLED)
+        self.mode_btn = tk.Button(master=self, text="Toggle Appearance", width=15, command=self.mode_click, state=tk.DISABLED)
         self.mode_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
         self.footer_label = tk.Label(master=self, text="Ready.")
@@ -235,7 +223,7 @@ class antMessenger(tk.Frame):
         self.root = root
         self._is_online:bool = False
         """INSERT DESCRIPTION HERE."""
-        self._is_light:bool = True
+        self._light_mode:bool = True
         """INSERT DESCRIPTION HERE."""
         self._profile_filename:str = None
         """INSERT DESCRIPTION HERE."""
@@ -362,33 +350,26 @@ class antMessenger(tk.Frame):
 
     def change_mode(self):
         """ Allows user to toggle between dark mode and light mode. """
-        if self._is_light is True:
+        if self._light_mode is True:
             self.body.messages_view.configure(bg="#242526", foreground="white")
             self.body.posts_frame.configure(bg="black")
             self.body.editor_frame.configure(bg="black")
             self.body.entry_frame.configure(bg="black")
             self.body.entry_editor.configure(bg="#242526", foreground="white", state=tk.NORMAL)
             self.body.style.configure('Treeview', background="#242526", foreground="white", fieldbackground="#242526")
-            self.footer.configure(bg="black")
-            self.footer.send_btn.configure(bg="black", foreground="white")
-            self.footer.new_btn.configure(bg="black", foreground="white")
-            self.footer.mode_btn.configure(bg="black", foreground="white")
-            self.footer.footer_label.configure(bg="black", foreground="white")
-            self._is_light = False
+            self.body.scroll_frame.configure(background="black")
+            self.body.messages_view_scrollbar.configure(background="black")
+            self._light_mode = False
 
-        elif self._is_light is False:
+        elif self._light_mode is False:
             self.body.messages_view.configure(bg="white", foreground="black")
             self.body.posts_frame.configure(bg="white")
             self.body.editor_frame.configure(bg="white")
             self.body.entry_frame.configure(bg="white")
             self.body.style.configure('Treeview', background="white", foreground="black", fieldbackground="white")
             self.body.entry_editor.configure(bg="white", foreground="black")
-            self.footer.configure(bg="white")
-            self.footer.send_btn.configure(bg="white", foreground="black")
-            self.footer.new_btn.configure(bg="white", foreground="black")
-            self.footer.mode_btn.configure(bg="white", foreground="black")
-            self.footer.footer_label.configure(bg="white", foreground="black")
-            self._is_light = True
+            self.body.scroll_frame.configure(bg='white')
+            self._light_mode = True
     
     def after(self, ms: int, func: None = ...) -> str:
         '''
@@ -443,22 +424,9 @@ class antMessenger(tk.Frame):
 
 if __name__ == "__main__":
     main = tk.Tk()
-<<<<<<< HEAD:antMessenger.py
     main.title("antMessenger!")
     
     main.geometry("740x500")
-=======
-
-    # 'title' assigns a text value to the Title Bar area of a window.
-    main.title("ZOT! Messenger")
-
-    # This is just an arbitrary starting point. You can change the value around to see how
-    # the starting size of the window changes. I just thought this looked good for our UI.
-    main.geometry("750x500")
-
-    # adding this option removes some legacy behavior with menus that modern OSes don't support. 
-    # If you're curious, feel free to comment out and see how the menu changes.
->>>>>>> 65da7d6cd6a6ed29dd29d09745ac81b123ff3912:zotMessenger.py
     main.option_add('*tearOff', False)
     
     antM = antMessenger(main)
