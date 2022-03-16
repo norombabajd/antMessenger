@@ -69,7 +69,7 @@ class Body(tk.Frame):
         """ 
         Insert a sent or recieved message in message_view.
         :text: Text to be inserted, derived from a Message or dict.
-        :tag: 'sent' or 'recieved', respectivly aligns text left or right.
+        :tag: 'sent', 'recieved', or 'welcome' respectivly aligns text left, right, or center.
 
         """
         self.messages_view.configure(state=tk.NORMAL)
@@ -104,6 +104,16 @@ class Body(tk.Frame):
         self._threads = {}
         for item in self.posts_tree.get_children():
             self.posts_tree.delete(item)
+
+    anteater = """
+       _.---._    /\\\\
+    ./'       "--'\//
+  ./              o \\
+ /./\  )______   \__ \\
+./  / /\ \   | \ \  \ \\
+   / /  \ \  | |\ \  \\7
+"     "    "  "
+    """
     
     def _draw(self):
         """ Call only once upon initialization to add widgets to the frame. """
@@ -132,8 +142,10 @@ class Body(tk.Frame):
         self.messages_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
         self.messages_view.tag_configure(tagName='sent', justify='right')
         self.messages_view.tag_configure(tagName='recieved', justify='left')
-        self.insert_msg("Create new profile or open existing one to start messaging!", 'recieved')
-
+        self.messages_view.tag_configure(tagName='welcome', justify='center')
+        self.insert_msg("Welcome Let's get started.\n", 'welcome')
+        self.insert_msg("Open or create a profile by navigating to File in the menu bar.\n", 'welcome')
+        self.insert_msg(self.anteater, 'welcome')
         self.messages_view_scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.messages_view.yview)
         self.messages_view['yscrollcommand'] = self.messages_view_scrollbar.set
         self.messages_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
@@ -399,7 +411,7 @@ if __name__ == "__main__":
 
     # This is just an arbitrary starting point. You can change the value around to see how
     # the starting size of the window changes. I just thought this looked good for our UI.
-    main.geometry("740x500")
+    main.geometry("750x500")
 
     # adding this option removes some legacy behavior with menus that modern OSes don't support. 
     # If you're curious, feel free to comment out and see how the menu changes.
