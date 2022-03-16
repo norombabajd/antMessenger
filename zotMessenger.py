@@ -7,6 +7,7 @@
 # 91483000
 #
 # zotMessenger.py
+# Constructs messenging window and sends and receives messages. 
 
 # TODO: Replace Post with Message
 #       Update functions to reflect those changes (posts_tree -> thread_tree)
@@ -106,51 +107,57 @@ class Body(tk.Frame):
     
     def _draw(self):
         """ Call only once upon initialization to add widgets to the frame. """
-        posts_frame = tk.Frame(master=self, width=250)
-        posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
-        self.posts_tree = ttk.Treeview(posts_frame, show=('tree'))
+        self.posts_frame = tk.Frame(master=self, width=250)
+        self.posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
+        self.posts_tree = ttk.Treeview(self.posts_frame, show=('tree'))
         self.posts_tree.bind("<<TreeviewSelect>>", self.node_select)
         self.posts_tree.pack(fill=tk.BOTH, side=tk.TOP, expand=True, padx=5, pady=5)
 
-        entry_frame = tk.Frame(master=self, bg="")
-        entry_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+
+        self.entry_frame = tk.Frame(master=self, bg="")
+        self.entry_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         
-        editor_frame = tk.Frame(master=entry_frame, bg="white")
-        editor_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        self.editor_frame = tk.Frame(master=self.entry_frame, bg="white")
+        self.editor_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         
-        self.entry_editor = tk.Text(editor_frame, width=0, height=3, state=tk.DISABLED)
+        self.entry_editor = tk.Text(self.editor_frame, width=0, height=3, state=tk.DISABLED)
         self.entry_editor.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=5, pady=5)
 
-        scroll_frame = tk.Frame(master=entry_frame, bg="blue", width=10)
-        scroll_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=False)
+        self.scroll_frame = tk.Frame(master=self.entry_frame, bg="", width=10)
+        self.scroll_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=False)
 
-        self.messages_view = tk.Text(editor_frame, width=0, state=tk.DISABLED)
+        self.messages_view = tk.Text(self.editor_frame, width=0, state=tk.DISABLED)
         self.messages_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
-        self.messages_view.tag_configure(tagName='sent', justify='left')
-        self.messages_view.tag_configure(tagName='recieved', justify='right')
+        self.messages_view.tag_configure(tagName='sent', justify='right')
+        self.messages_view.tag_configure(tagName='recieved', justify='left')
+        self.insert_msg("Create new profile or open existing one to start messaging!", 'recieved')
 
-        messages_view_scrollbar = tk.Scrollbar(master=scroll_frame, command=self.messages_view.yview)
-        self.messages_view['yscrollcommand'] = messages_view_scrollbar.set
-        messages_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
+        self.messages_view_scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.messages_view.yview)
+        self.messages_view['yscrollcommand'] = self.messages_view_scrollbar.set
+        self.messages_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
 
 class Footer(tk.Frame):
     """
     A subclass of tk.Frame that is responsible for drawing all of the widgets
     in the footer portion of the root frame.
     """
-    def __init__(self, root, send_callback=None, add_callback=None):
-        """ Initializes root, send_callback, and online_callback class attributes. """
+    def __init__(self, root, send_callback=None, add_callback=None, mode_callback=None):
+        """ Initializes root, send_callback, add_callback, mode_callback, is_online, and is_light class attributes. """
         tk.Frame.__init__(self, root)
         self.root = root
         self._send_callback = send_callback
         self._add_callback = add_callback
+        self._mode_callback = mode_callback
         self.is_online = tk.IntVar()
+        self.is_light = tk.IntVar()
         self._draw()
         
     def send_click(self):
         """
         Calls the callback function specified in the send_callback class attribute, if
-        available, when the save_button has been clicked.
+        available, when the send_btn has been clicked.
         """
         if self._send_callback is not None:
             self._send_callback()
@@ -158,10 +165,18 @@ class Footer(tk.Frame):
     def add_click(self):
         """
         Calls the callback function specified in the add_callback class attribute, if
-        available, when the save_button has been clicked.
+        available, when the new_btn has been clicked.
         """
         if self._add_callback is not None:
             self._add_callback()
+    
+    def mode_click(self):
+        """
+        Calls the callback function specified in the mode_callback class attribute, if
+        available, when the mode_btn has been clicked.
+        """
+        if self._mode_callback is not None:
+            self._mode_callback()
 
     def set_status(self, message):
         """ Updates the text that is displayed in the footer_label widget. """
@@ -172,8 +187,11 @@ class Footer(tk.Frame):
         self.send_btn = tk.Button(master=self, text="Send", width=5, command=self.send_click, state=tk.DISABLED)
         self.send_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=15, pady=5)
 
-        self.new_btn = tk.Button(master=self, text="New Conversation", width=12, command=self.add_click, state=tk.DISABLED)
+        self.new_btn = tk.Button(master=self, text="New Conversation", width=15, command=self.add_click, state=tk.DISABLED)
         self.new_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
+
+        self.mode_btn = tk.Button(master=self, text="Change Mode", width=12, command=self.mode_click, state=tk.DISABLED)
+        self.mode_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
         self.footer_label = tk.Label(master=self, text="Ready.")
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
@@ -191,6 +209,7 @@ class MainApp(tk.Frame):
         tk.Frame.__init__(self, root)
         self.root = root
         self._is_online = False
+        self._is_light = True
         self._profile_filename = None
 
         # Initialize a new NaClProfile and assign it to a class attribute.
@@ -219,6 +238,8 @@ class MainApp(tk.Frame):
         Opens an existing DSU file when the 'Open' menu item is clicked and loads the profile
         data into the UI.
         """
+        self.body.clear_message_view()
+
         if filename == None:
             # Prompt the user if a file is not provided (non-TclError).
             filename = tk.filedialog.askopenfile(filetypes=[('Distributed Social Profile', '*.dsu')])
@@ -275,6 +296,7 @@ class MainApp(tk.Frame):
 
     def new_conversation(self):
         """ Creates a new window to add a new contact. """
+        self.body.clear_message_view()
         add_window = tk.Toplevel(self)
 
         self.info = tk.Label(master=add_window, text="Enter their username below!", justify='center')
@@ -308,6 +330,46 @@ class MainApp(tk.Frame):
         self.body.posts_tree.insert('', 'end', 'end', text=new_contact)
         self.body.update()
 
+    def change_mode(self):
+        """ Allows user to toggle between dark mode and light mode. """
+        if self._is_light is True:
+            self.body.messages_view.configure(bg="#242526", foreground="white")
+            self.body.posts_frame.configure(bg="black")
+            self.body.editor_frame.configure(bg="black")
+            self.body.entry_frame.configure(bg="black")
+            self.body.entry_editor.configure(bg="#242526", foreground="white", state=tk.NORMAL)
+            self.body.style.configure('Treeview', background="#242526", foreground="white", fieldbackground="#242526")
+            self.footer.configure(bg="black")
+            self.footer.send_btn.configure(bg="black", foreground="white")
+            self.footer.new_btn.configure(bg="black", foreground="white")
+            self.footer.mode_btn.configure(bg="black", foreground="white")
+            self.footer.footer_label.configure(bg="black", foreground="white")
+            self._is_light = False
+
+        elif self._is_light is False:
+            self.body.messages_view.configure(bg="white", foreground="black")
+            self.body.posts_frame.configure(bg="white")
+            self.body.editor_frame.configure(bg="white")
+            self.body.entry_frame.configure(bg="white")
+            self.body.style.configure('Treeview', background="white", foreground="black", fieldbackground="white")
+            self.body.entry_editor.configure(bg="white", foreground="black")
+            self.footer.configure(bg="white")
+            self.footer.send_btn.configure(bg="white", foreground="black")
+            self.footer.new_btn.configure(bg="white", foreground="black")
+            self.footer.mode_btn.configure(bg="white", foreground="black")
+            self.footer.footer_label.configure(bg="white", foreground="black")
+            self._is_light = True
+    
+    def after(self, ms: int, func: None = ...) -> str:
+        '''
+        :param ms: The delay in milliseconds before func is called.
+        :param func: The function to be called when timer event is removed from the event queue
+        
+        :return: an id that is associated with this timer event
+        '''
+        pass
+					
+
     def _draw(self):
         """ Call only once, upon initialization to add widgets to root frame. """
         # Build a menu and add it to the root frame.
@@ -316,15 +378,17 @@ class MainApp(tk.Frame):
         menu_file = tk.Menu(menu_bar)
         menu_bar.add_cascade(menu=menu_file, label='File')
         menu_file.add_command(label='New', command=self.new_profile)
-        menu_file.add_command(label='Open...', command=self.open_profile)
+        menu_file.add_command(label='Open', command=self.open_profile)
         menu_file.add_command(label='Close', command=self.close)
 
         # The Body and Footer classes must be initialized and packed into the root window.
         self.body = Body(self.root, self._current_profile)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
 
-        self.footer = Footer(self.root, send_callback=self.send_message, add_callback=self.new_conversation)
+        self.footer = Footer(self.root, send_callback=self.send_message, add_callback=self.new_conversation, mode_callback=self.change_mode)
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
+
+        self.footer.mode_btn.configure(state=tk.NORMAL)
 
 if __name__ == "__main__":
     # All Tkinter programs start with a root window. We will name ours 'main'.
@@ -335,7 +399,7 @@ if __name__ == "__main__":
 
     # This is just an arbitrary starting point. You can change the value around to see how
     # the starting size of the window changes. I just thought this looked good for our UI.
-    main.geometry("720x480")
+    main.geometry("740x500")
 
     # adding this option removes some legacy behavior with menus that modern OSes don't support. 
     # If you're curious, feel free to comment out and see how the menu changes.

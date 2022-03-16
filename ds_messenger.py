@@ -7,6 +7,7 @@
 # 50253773
 #
 # ds_messenger.py
+# Handles sending and receiving messages and DirectMessenger class.
 
 import socket, time
 import ds_protocol

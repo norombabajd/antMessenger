@@ -7,7 +7,7 @@
 # 50253773
 
 # test_ds_message_protocol.py
-# INSERT DESCRIPTION HERE.
+# Tests all(), new(), and send() methods from ds_messenger.py.
 
 from ds_protocol import send, all, new
 
