@@ -66,7 +66,8 @@ class Body(tk.Frame):
         Insert a sent or recieved message in message_view.
         
         :text: Text to be inserted, derived from a Message or dict.
-        :tag: 'sent' or 'recieved', respectivly aligns text left or right.
+        :tag: 'sent', 'recieved', or 'welcome' respectivly aligns text left, right, or center.
+
         """
         # Enabling messages_view is required to perform changes to the widget.
         self.messages_view.configure(state=tk.NORMAL)
@@ -108,6 +109,16 @@ class Body(tk.Frame):
         self._threads = {}
         for item in self.posts_tree.get_children():
             self.posts_tree.delete(item)
+
+    anteater = """
+       _.---._    /\\\\
+    ./'       "--'\//
+  ./              o \\
+ /./\  )______   \__ \\
+./  / /\ \   | \ \  \ \\
+   / /  \ \  | |\ \  \\7
+"     "    "  "
+    """
     
     def _draw(self):
         """ Add widgets to the frame upon initialization, call only once."""
