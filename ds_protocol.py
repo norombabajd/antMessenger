@@ -1,25 +1,29 @@
-# John Daniel Norombaba
-# jnoromba@uci.edu
-# 91483000
-#
 # Audrey Nguyen
 # audrehn3@uci.edu
 # 50253773
 #
+# John Daniel Norombaba
+# jnoromba@uci.edu
+# 91483000
+#
 # ds_protocol.py
-# Handles protocols that communicate with the DSU server.
+# Manages sending data to and recieving data from a DSU server.
+#
+# ICS 32 Winter 2022
+# Final Exam: Chatting with Friends
 
 import json, time
 from collections import namedtuple
 
 class DSProtocolError(Exception):
+  """DSProtocolError is raised when there was an issue constructing a protocol or handling data from a DSU server."""
   pass
 
-# Namedtuple to hold the values retrieved from json messages.
-DataTuple = namedtuple('DataTuple', ['response','type', 'messages'])
+DataTuple: namedtuple = namedtuple('DataTuple', ['response','type', 'messages'])
+"""DataTuple is a namedtuple that will store responses from a DSU server."""
 
 def join(username:str, password:str) -> str:
-  """ Constructs and encodes the join protocol. """
+  """Construct and encode the join protocol."""
   try:
     # Test for whitespace and encode.
     if username.split() != 0 and password.split() != 0:
@@ -30,7 +34,7 @@ def join(username:str, password:str) -> str:
     raise DSProtocolError("Invalid username or password provided.")
   
 def post(user_token:str, message:str) -> str:
-  """ Constructs and encodes the post protocol. """
+  """Construct and encode the post protocol."""
   try:
     # Test for whitespace and encode.
     if len(message.split()) != 0:
@@ -42,7 +46,7 @@ def post(user_token:str, message:str) -> str:
     raise DSProtocolError("Invalid message or token type provided.")
 
 def update_bio(user_token:str, bio:str) -> str:
-  """ Constructs and encodes the bio protocol. """
+  """Construct and encode the bio protocol."""
   try:
     if len(bio.split()) != 0:
       msg = f'{{"token": "{user_token}", "bio": {{"entry": "{bio}", "timestamp": "1603167689.3928561"}}}}'
@@ -51,7 +55,7 @@ def update_bio(user_token:str, bio:str) -> str:
     raise DSProtocolError("Invalid bio or token type provided.")
 
 def send(user_token:str, entry:str):
-  """ Send a directmessage to another DS user. """
+  """Send a directmessage to another DS user."""
   try:
     if user_token != None and len(entry.split()) != 0:
       return encode_json(f'{{"token": "{user_token}", "directmessage": {entry}}}')
@@ -61,7 +65,7 @@ def send(user_token:str, entry:str):
     raise DSProtocolError("Invalid bio or token type provided.") 
 
 def new(user_token):
-  """ Request unread message from the DS server. """
+  """Request unread message from the DS server."""
   try:
     if user_token != None:
       return encode_json(f'{{"token":"{user_token}", "directmessage": "new"}}')
@@ -71,7 +75,7 @@ def new(user_token):
     raise DSProtocolError("Invalid token type provided.") 
 
 def all(user_token):
-  """ Request all messages from DS server. """
+  """Request all messages from DS server."""
   try:
     if user_token != None:
       return encode_json(f'{{"token":"{user_token}", "directmessage": "all"}}')
@@ -81,11 +85,7 @@ def all(user_token):
     raise DSProtocolError("Invalid token type provided.") 
 
 def extract_json(json_msg:json) -> DataTuple:
-  '''
-  Converts json objects into a Python namedtuple.
-  :param json_msg: A message encoded in json.
-
-  '''
+  """Accepts and decodes a JSON object to DataTuple."""
   try:
     messages = []
     json_obj = json.loads(json_msg)    
@@ -93,7 +93,6 @@ def extract_json(json_msg:json) -> DataTuple:
     type = json_obj['response']['type']
     if 'messages' in response:
         messages = response['messages']
-
   except json.JSONDecodeError as e:
     print("ERROR: JSON response cannot be decoded.")
     return DataTuple(response={'type': 'error'}, type='error', messages=None)
@@ -104,9 +103,5 @@ def extract_json(json_msg:json) -> DataTuple:
   return DataTuple(response, type, messages)
 
 def encode_json(str_msg:str) -> str:
-  '''
-  Encodes objects into json, utf-8.
-  :param str_msg: A string message/bio type.
-  
-  '''
+  """Accepts and encodes a string object to JSON, UTF-8."""
   return str_msg.encode('utf-8')

@@ -28,8 +28,11 @@ class DirectMessenger:
   def __init__(self, dsuserver=None, username=None, password=None):
     self.token:str = None
     self.dsuserver:str = dsuserver
+    """Instantiates the object's default DSU server."""
     self.username:str = username
+    """Instantiates the object's default username."""
     self.password:str = password
+    """Instantiates the object's default password."""
 	
   def _communicate(self, protocol:bytes):
     """Communicates with a dsuserver, sending each function's respective protocol."""
@@ -80,6 +83,7 @@ class DirectMessenger:
       print(dpe)
 
   def send(self, message:str, recipient:str) -> bool:
+    """INSERT DESCRIPTION HERE."""
     try:
       self._login()
       entry = f'{{"entry": "{message}", "recipient": "{recipient}", "timestamp": {time.time()}}}'
@@ -94,6 +98,7 @@ class DirectMessenger:
       return False
 
   def retrieve_new(self) -> list:
+    """INSERT DESCRIPTION HERE."""
     try:
       self._login()
       data = self._communicate(ds_protocol.new(self.token))
@@ -105,6 +110,7 @@ class DirectMessenger:
       print(dpe)
 
   def retrieve_all(self) -> list:
+    """INSERT DESCRIPTION HERE."""
     try:
       self._login()
       data = self._communicate(ds_protocol.all(self.token))
@@ -114,19 +120,3 @@ class DirectMessenger:
       print(dme)
     except DSProtocolError as dpe:
       print(dpe)
-  
-  
-if __name__ == "__main__":
-  d = DirectMessenger()
-  d2 = DirectMessenger()
-
-  d.username = "johndanieln"
-  d.password = "zotzot9148"
-  d.dsuserver = '168.235.86.101'
-  
-  d2.username = "aud"
-  d2.password = "aud1234"
-  d2.dsuserver = '168.235.86.101'
-
-  print(d.retrieve_new())
-  print(d.retrieve_all())
