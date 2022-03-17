@@ -65,8 +65,7 @@ class Body(tk.Frame):
         """
         # Enabling thread_view is required to perform changes to the widget.
         self.thread_view.configure(state=tk.NORMAL)
-        self.thread_view.insert('end', text, (tag))
-        self.thread_view.insert('end', "\n")
+        self.thread_view.insert('end', f"{text}\n", (tag))
         self.thread_view.configure(state=tk.DISABLED)
 
     def populate_thread(self, thread:list):
@@ -357,7 +356,7 @@ class antMessenger(tk.Frame):
                 self._current_profile._conversations[user].append(msg)
                 if user == self.body._contact:
                     # Insert the recieved message.
-                    self.body.insert_msg(f"\n{msg['message']}", 'recieved')
+                    self.body.insert_msg(f"{msg['message']}\n", 'recieved')
                 else:
                     self.footer.set_status(f"New message from {user}")
         
