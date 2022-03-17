@@ -10,13 +10,16 @@
 #
 # Anteaters Networking through Technology Messenger or antMessenger for short.
 # The main application containing the UI and functions to send and recieve messages from a DSU Server.
+#
+# ICS 32 Winter 2022
+# Final Exam: Chatting with Friends
 
 import time
 import tkinter as tk
 from tkinter import TclError, ttk, filedialog
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_messenger import DirectMessenger, DirectMessengerError
-from ds_protocol import DSProtocolError
+from ds_message_protocol import DSProtocolError
 
 class Body(tk.Frame):
     """A subclass of tk.Frame that draws widgets in the body portion of the root frame."""
