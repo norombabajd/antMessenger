@@ -293,20 +293,14 @@ class antMessenger(tk.Frame):
         """ Saves the text currently in the messages_view widget to the active DSU file. """
         message = self.body.entry_editor.get('0.0', 'end').rstrip()
         
-        """if self._messenger.send(entry, self.body._contact):
-            self.body.insert_msg(entry, 'sent')
+        if self._messenger.send(message, self.body._contact):
+            self.body.insert_msg(message, 'sent')
             self._current_profile.store_sent(Message(self.body._contact, message))
             self._current_profile.save_profile(self.profile_filename)
             self.footer.set_status("Message sent!")
             self.body.clear_text_entry()
         else:
-            self.footer.set_status("There was a problem, check your internet connection.")"""
-        
-        self._current_profile.store_sent(Message(self.body._contact, message))
-        self._current_profile.save_profile(self.profile_filename)
-        self.footer.set_status("Message sent!")
-        self.body.insert_msg(message, 'sent')
-        self.body.clear_text_entry()
+            self.footer.set_status("There was a problem, check your internet connection.")
         self.update()
 
     def new_conversation(self):
@@ -387,7 +381,7 @@ class antMessenger(tk.Frame):
         """INSERT DESCRIPTION HERE."""
         inbox:list = self._messenger.retrieve_new()
         """INSERT DESCRIPTION HERE."""
-
+        print(inbox)
         for msg in inbox:
             user = msg['from']
             if user in self._current_profile._conversations and user in self.body._threads:
