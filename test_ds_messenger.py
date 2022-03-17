@@ -14,7 +14,6 @@
 
 from ds_messenger import DirectMessenger
 
-
 assert(DirectMessenger.send('Hello World!', 'aud') == True)
 assert((DirectMessenger.send(1, 'aud') == False))
 
@@ -22,5 +21,3 @@ assert(DirectMessenger.retrieve_new() == ['{"entry": "Hello World!","recipient":
 
 DirectMessenger.send('Second message' 'aud')
 assert(DirectMessenger.retrieve_all() == ['{"entry": "Hello World!","recipient":"aud", "timestamp": "1603167689.3928561"}', '{"entry": "Second message","recipient":"aud", "timestamp": "1603167689.3928561"}'])
-
-
