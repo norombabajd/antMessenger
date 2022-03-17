@@ -16,32 +16,16 @@
 import json, time, os
 from pathlib import Path
 
-
-"""
-DsuFileError is a custom exception handler that you should catch in your own code. It
-is raised when attempting to load or save Profile objects to file the system.
-
-"""
 class DsuFileError(Exception):
+    """Handles errors with Profile serialization, invalid file type."""
     pass
 
-"""
-DsuProfileError is a custom exception handler that you should catch in your own code. It
-is raised when attempting to deserialize a dsu file to a Profile object.
-
-"""
 class DsuProfileError(Exception):
+    """Handles errors with Profile serialization, mismatched data."""
     pass
-
 
 class Message(dict):
-    """ 
-
-    The Post class is responsible for working with individual user posts. It currently supports two features: 
-    A timestamp property that is set upon instantiation and when the entry object is set and an 
-    entry property that stores the post message.
-
-    """
+    """The Message class is responsible for working with individual posts."""
     def __init__(self, recipient:str = None, entry:str = None, timestamp:float = 0):
         self._timestamp = timestamp
         self.set_entry(entry)
@@ -60,13 +44,14 @@ class Message(dict):
         self._recipient = recipient
         dict.__setitem__(self, 'recipient', recipient)
 
-    def get_entry(self):
-        return self._entry
-    
     def set_time(self, time:float):
         self._timestamp = time
         dict.__setitem__(self, 'timestamp', time)
-    
+
+    def get_entry(self):
+        """Retrieve a sent message."""
+        return self._entry
+
     def get_time(self):
         return self._timestamp
 
@@ -80,37 +65,46 @@ class Message(dict):
     
 class Profile:
     def __init__(self, dsuserver=None, username=None, password=None):
-        self.dsuserver = dsuserver # REQUIRED
-        self.username = username # REQUIRED
-        self.password = password # REQUIRED
-        self.bio = ''            # OPTIONAL
-        self._conversations = {}         # OPTIONAL
+        """Create a profile's unique attributes including their username, password, biography, and a container for conversations."""
+        self.dsuserver = dsuserver
+        self.username = username
+        self.password = password
+        self.bio = ''
+        self._conversations:str = {}
+        """Stores two types of conversations: Messages and dictionaries returned from a dsuserver."""
     
     def store_sent(self, message: Message) -> None:
+        """Appends messages sent online, store with a specific contact."""
         if message.recipient not in self._conversations:
             self._conversations[message.recipient] = []
         self._conversations[message.recipient].append(message)
 
     def store_recieved(self, messages:list[dict]):
+        """Appends messages sent to the profile, store with a specific contact."""
         for msg in messages:
             if msg['from'] not in self._conversations:
                 self._conversations[msg['from']] = []
             self._conversations[msg['from']].append(msg)
 
     def get_conversations(self) -> dict[Message]:
+        """Returns all local conversations."""
         return self._conversations
     
     def get_thread(self, user) -> list[Message]:
+        """Returns a specific conversation or thread."""
         return self._conversations[user]
 
     def dispose_conversation(self, recipient:str) -> None:
+        """Deletes a specific contact and the corrosponding thread."""
         if recipient in self._conversations:
             del self._conversations[recipient]
 
     def add_contact(self, contact):
+        """Add a contact with a container for the conversation thread."""
         self._conversations.update({contact: []})
 
     def save_profile(self, path: str) -> None:
+        """Save the profile locally, interact with the filesystem."""
         p = Path(path)
 
         if os.path.exists(p) and p.suffix == '.dsu':
@@ -124,6 +118,7 @@ class Profile:
             raise DsuFileError("Invalid DSU file path or type")
 
     def load_profile(self, path: str) -> None:
+        """Load a profile onto a Profile object, interact with the filesystem."""
         p = Path(path)
 
         if os.path.exists(p) and p.suffix == '.dsu':

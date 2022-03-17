@@ -16,6 +16,7 @@ import tkinter as tk
 from tkinter import TclError, ttk, filedialog
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_messenger import DirectMessenger, DirectMessengerError
+from ds_protocol import DSProtocolError
 
 class Body(tk.Frame):
     """A subclass of tk.Frame that draws widgets in the body portion of the root frame."""
@@ -130,33 +131,33 @@ class Body(tk.Frame):
         self.style.theme_use('clam')
 
         self.thread_frame:tk.Frame = tk.Frame(master=self, bg="")
-        """INSERT DESCRIPTION HERE."""
+        """Create the frame responsible for conversations."""
         self.thread_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         
         self.text_frame:tk.Frame = tk.Frame(master=self.thread_frame, bg="white")
-        """INSERT DESCRIPTION HERE."""
+        """Create the frame responsible for the text box."""
         self.text_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         
         self.text_box:tk.Text = tk.Text(self.text_frame, width=0, height=3, state=tk.DISABLED, bg="white", foreground="black")
-        """INSERT DESCRIPTION HERE."""
+        """Create the interactable text box."""
         self.text_box.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=5, pady=5)
         
         self.scroll_frame:tk.Frame = tk.Frame(master=self.thread_frame, bg="white", width=10)
-        """INSERT DESCRIPTION HERE."""
+        """Create the scroll bar frame."""
         self.scroll_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=False)
 
         self.thread_view:tk.Text = tk.Text(self.text_frame, width=0, state=tk.DISABLED, bg="white", foreground="black")
-        """INSERT DESCRIPTION HERE."""
+        """Create the non-interactable thread view."""
         self.thread_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
-        
+
         self.thread_view.tag_configure(tagName='sent', justify='right')
         self.thread_view.tag_configure(tagName='recieved', justify='left')
         self.thread_view.tag_configure(tagName='heading', justify='center')
-
-        self.insert_msg(f"\nWelcome to antMessenger! Let's get started.\nOpen or create a profile by navigating to File in the menu bar.\n\n{self.anteater}", 'heading')
+        
+        self.insert_msg(f"\nWelcome to antMessenger! Let's get started.\nOpen or create a profile by navigating to File in the menu bar.\nOnce you're in, add a contact or view an existing thread.\n\n{self.anteater}", 'heading')
 
         self.thread_view_scrollbar:tk.Scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.thread_view.yview)
-        """INSERT DESCRIPTION HERE."""
+        """Create the scrollbar."""
         self.thread_view['yscrollcommand'] = self.thread_view_scrollbar.set
         self.thread_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
 
@@ -192,16 +193,20 @@ class Footer(tk.Frame):
 
     def _draw(self):
         """ Add widgets to the footer upon initialization, call only once."""
-        self.send_btn = tk.Button(master=self, text="Send", width=10, command=self.send_click, state=tk.DISABLED)
+        self.send_btn:tk.Button = tk.Button(master=self, text="Send", width=10, command=self.send_click, state=tk.DISABLED)
+        """Create the footer's send button."""
         self.send_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
-        self.new_btn = tk.Button(master=self, text="New Conversation", width=15, command=self.add_click, state=tk.DISABLED)
+        self.new_btn:tk.Button = tk.Button(master=self, text="New Conversation", width=15, command=self.add_click, state=tk.DISABLED)
+        """Create the footer's new conversation button."""
         self.new_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
-        self.mode_btn = tk.Button(master=self, text="Toggle Appearance", width=15, command=self.mode_click, state=tk.DISABLED)
+        self.mode_btn:tk.Button = tk.Button(master=self, text="Change Appearance", width=15, command=self.mode_click, state=tk.DISABLED)
+        """Create the footer's change appearance button."""
         self.mode_btn.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
-        self.footer_label = tk.Label(master=self, text="Ready.")
+        self.footer_label:tk.Label = tk.Label(master=self, text="Ready.")
+        """Create the footer's label."""
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
 
 class antMessenger(tk.Frame):
@@ -210,22 +215,14 @@ class antMessenger(tk.Frame):
         """Initializes root class attribute."""
         tk.Frame.__init__(self, root)
         self.root = root
-        self._is_online:bool = False
-        """INSERT DESCRIPTION HERE."""
         self._appearance:bool = True
-        """INSERT DESCRIPTION HERE."""
+        """Responsible for the state of the program's appearance (light or dark)."""
         self._profile_filename:str = None
-        """INSERT DESCRIPTION HERE."""
-
-        # Initialize a new NaClProfile and assign it to a class attribute.
+        """Store the current path the program interacts with."""
         self._current_profile:Profile = Profile()
-        """INSERT DESCRIPTION HERE."""
-        
+        """Initialize a new Profile and assign it to a class attribute."""
         self._messenger:DirectMessenger = DirectMessenger()
-        """INSERT DESCRIPTION HERE."""
-
-        # After all initialization is complete, call the _draw method to pack the widgets
-        # into the root frame
+        """Initialize a new DirectMessager and assign it to a class attribute."""
         self._draw()
 
     def close(self):
@@ -236,10 +233,10 @@ class antMessenger(tk.Frame):
         """Create a new DSU file when the 'New' menu item is clicked."""
         try:
             filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')])
-            self.profile_filename = filename.name
+            self._profile_filename = filename.name
             self._current_profile = Profile(dsuserver='168.235.86.101', username='notjohndaniel', password='zotzot9148')
             self._messenger = DirectMessenger(dsuserver='168.235.86.101', username='notjohndaniel', password='zotzot9148')
-            self._current_profile.save_profile(self.profile_filename)
+            self._current_profile.save_profile(self._profile_filename)
             self.body.reset_ui()
             self.footer.set_status("Ready.")
         except AttributeError:
@@ -251,13 +248,10 @@ class antMessenger(tk.Frame):
         if filename == None:
             # Prompt the user if a file is not provided (non-TclError).
             filename = tk.filedialog.askopenfile(filetypes=[('Distributed Social Profile', '*.dsu')])
-            self._current_profile = Profile()
-            self._messenger = DirectMessenger()
-            
         try:
             # Open and load the profile.
-            self.profile_filename = filename.name
-            self._current_profile.load_profile(self.profile_filename)
+            self._profile_filename = filename.name
+            self._current_profile.load_profile(self._profile_filename)
             self._messenger = DirectMessenger(dsuserver=self._current_profile.dsuserver, username=self._current_profile.username, password=self._current_profile.password)
             self.body.populate_thread_tree(self._current_profile.username, self._current_profile.get_conversations())
             # Update the UI.
@@ -265,39 +259,41 @@ class antMessenger(tk.Frame):
             self.footer.new_btn.configure(state=tk.NORMAL)
             self.body.text_box.configure(state=tk.NORMAL)
             self.footer.set_status(f"Welcome back.")
-            main.after(5000, antM.retrieve_messages)
+            main.after(3000, antM.retrieve_messages)
             # Set changes.
             self.update()
         except AttributeError:
             # When a user does not open a profile.
-            self.footer.set_status("Open action aborted.")
-            time.sleep(2)
-            self.footer.set_status("Ready.")
-        except TclError as t:
+            self.footer.set_status("Open interrupted or canceled.")
+        except TclError:
             # Replace an active profile with a new file.
             self.body.reset_ui()
+            self._current_profile = Profile()
             self.open_profile(filename)
         except DsuProfileError:
             # When a user attempts to open a legacy or corrupted '.dsu' profile.
             self.footer.set_status("Corrupted or unsupported Profile.")
-            time.sleep(2)
-            self.footer.set_status("Ready.")
 
 
     def new_conversation(self):
         """ Creates a new window to add a new contact. """
         self.body.clear_message_view()
-        add_window = tk.Toplevel(self)
+        add_window:tk.Toplevel = tk.Toplevel(self)
+        """Assign the window to a variable."""
 
-        self.info = tk.Label(master=add_window, text="Enter their username below!", justify='center')
+        self.info:tk.Label = tk.Label(master=add_window, text="Enter their username below!", justify='center')
+        """Provide the user with information. """
         self.info.pack(fill=tk.BOTH, side=tk.TOP, padx=10, pady=10)
         
-        self.add = tk.Button(add_window, text="Add Anteater", width=5, command=self.add_contact)
+        self.add:tk.Button = tk.Button(add_window, text="Add Contact", width=5, command=self.add_contact)
+        """Create the add contact button."""
         self.add.pack(fill=tk.BOTH, side=tk.BOTTOM, padx=5, pady=5)
 
-        self.user = tk.Text(add_window, width=0, height=1,)
+        self.user:tk.Text = tk.Text(add_window, width=0, height=1)
+        """Create the textbox. """
         self.user.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=10, pady=5)
 
+        # Initalize the window.
         add_window.title("New Conversation")
         add_window.geometry("300x200")
         add_window.option_add('*tearOff', False)
@@ -309,34 +305,30 @@ class antMessenger(tk.Frame):
     def add_contact(self):
         """ Obtains name of contact from user, creates a new profile, & adds to treeview. """
         try:
-            id = len(self.body._threads) + 1
-            new_contact = self.user.get('0.0', 'end').rstrip()
+            id:int = len(self.body._threads) + 1
+            """Create's the id for the posts_view tree."""
+            new_contact:str = self.user.get('0.0', 'end').rstrip()
+            """Store and test for the contact in the text box."""
 
-            if new_contact.split() != 0:
+            if new_contact.split() == 1:
+                # Test for whitespace.
                 self._current_profile.add_contact(new_contact)
                 self.body._threads.update({new_contact:[]})
-                self._current_profile.save_profile(self.profile_filename)
+                self._current_profile.save_profile(self._profile_filename)
                 self.footer.set_status("Ready.")
+                self.body.posts_tree.insert('', id, id, text=new_contact)
         except AttributeError:
             # Inform the user when they cancel profile creation.
-            self.footer.set_status("Profile creation aborted.")
-
-        self.body.posts_tree.insert('', id, id, text=new_contact)
-
-        try:
-            pass
-        except:
-            pass
-
+            self.footer.set_status("No users added.")
         self.body.update()
 
     def send_message(self):
-        """ Saves the text currently in the thread_view widget to the active DSU file. """
+        """Saves the text currently in the thread_view widget to the active DSU file."""
         message = self.body.text_box.get('0.0', 'end').rstrip()
         if self._messenger.send(message, self.body._contact):
             self.body.insert_msg(message, 'sent')
             self._current_profile.store_sent(Message(self.body._contact, message))
-            self._current_profile.save_profile(self.profile_filename)
+            self._current_profile.save_profile(self._profile_filename)
             self.footer.set_status("Message sent!")
             self.body.clear_text_entry()
         else:
@@ -344,37 +336,38 @@ class antMessenger(tk.Frame):
         self.update()
 
     def retrieve_messages(self):
-        """INSERT DESCRIPTION HERE."""
+        """Retrieve messages and handle retrieved data."""
         inbox:list = self._messenger.retrieve_new()
-        """INSERT DESCRIPTION HERE."""
-        
-        for msg in inbox:
-            user:str = msg['from']
-            """Store the username from each recieved message."""
-            if user in self._current_profile._conversations and user in self.body._threads:
-                # Check to see if the contact is in the user's list; prevents unwanted interactions.
-                self._current_profile._conversations[user].append(msg)
-                if user == self.body._contact:
-                    # Insert the recieved message.
-                    self.body.insert_msg(f"{msg['message']}\n", 'recieved')
-                    self.footer.set_status(f"New message from {user}")
-                else:
-                    self.footer.set_status(f"New message from {user}")
-        
-        self.root.after(5000, self.retrieve_messages)
+        """Retrieve and store messages. Retrieve from server."""
+        try:
+            for msg in inbox:
+                user:str = msg['from']
+                """Store the username from each recieved message."""
+                if user in self._current_profile._conversations and user in self.body._threads:
+                    # Check to see if the contact is in the user's list; prevents unwanted interactions.
+                    self._current_profile._conversations[user].append(msg)
+                    if user == self.body._contact:
+                        # Insert the recieved message.
+                        self.body.insert_msg(f"{msg['message']}\n", 'recieved')
+                        self.footer.set_status(f"New message from {user}")
+                    else:
+                        self.footer.set_status(f"New message from {user}")
+            if len(inbox) == 0:
+                self.footer.set_status("No new messages.")
+        except:
+            self.footer.set_status("Unable to pull messages.")
+        self.root.after(3000, self.retrieve_messages)
     
     def after(self, ms: int, func: None = ...) -> str:
-        '''
-        :param ms: The delay in milliseconds before func is called.
+        """:param ms: The delay in milliseconds before func is called.
         :param func: The function to be called when timer event is removed from the event queue
         
         :return: an id that is associated with this timer event
-        '''
+        """
         pass
 
     def toggle_appearance(self):
         """ Allows user to toggle between dark mode and light mode. """
-        
         self.body.style.configure('Treeview', background="#242526", foreground="white", fieldbackground="#242526") if self._appearance else self.body.style.configure('Treeview', background="white", foreground="black", fieldbackground="white")
         self.body.thread_view.configure(bg="#242526", foreground="white") if self._appearance else self.body.thread_view.configure(bg="white", foreground="black")
         self.body.text_box.configure(bg="#242526", foreground="white") if self._appearance else self.body.text_box.configure(bg="white", foreground="black")
@@ -386,9 +379,11 @@ class antMessenger(tk.Frame):
     def _draw(self):
         """ Call only once, upon initialization to add widgets to root frame. """
         # Build a menu and add it to the root frame.
-        menu_bar = tk.Menu(self.root)
+        menu_bar:tk.Menu = tk.Menu(self.root)
+        """Create menu bar items."""
         self.root['menu'] = menu_bar
-        menu_file = tk.Menu(menu_bar)
+        menu_file:tk.Menu = tk.Menu(menu_bar)
+        """Add file to menu."""
         menu_bar.add_cascade(menu=menu_file, label='File')
         menu_file.add_command(label='New', command=self.new_profile)
         menu_file.add_command(label='Open', command=self.open_profile)
@@ -404,15 +399,18 @@ class antMessenger(tk.Frame):
         self.footer.mode_btn.configure(state=tk.NORMAL)
 
 if __name__ == "__main__":
+    # Create main application window.
     main = tk.Tk()
     main.title("antMessenger!")
     
+    # Set window properties.
     main.geometry("740x500")
     main.option_add('*tearOff', False)
     
+    # Create callable application.
     antM = antMessenger(main)
     
+    # Update and set window properties, loop.
     main.update()
     main.minsize(main.winfo_width(), main.winfo_height())
-
     main.mainloop()
