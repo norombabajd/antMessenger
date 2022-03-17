@@ -9,81 +9,74 @@
 # test_ds_message_protocol.py
 # Tests all(), new(), and send() methods from ds_messenger.py.
 
-from ds_protocol import send, all, new
+from ds_message_protocol import send, all, new, extract_json
 
-token = ""
-entries = ""
+tokens = ["450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "hLBcnWQFkVNXOCVhoVInh574xwMD+rfxCPIpNOgUPw4=", "N9vhv41IqIz1vTEFEsI1pnHwsDvtFYRYIfK7MLYFVXw=", ""]
+entries = ['{"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}', '{"entry": "Hey!","recipient":"notjohndaniel", "timestamp": "2603420689.2928565"}', '{"entry": "yooo!","recipient":"aud", "timestamp": "2603420689.2928565"}', {}]
 
-
-user_token = "450e2846-3ae1-418a-8aa6-f6ea586b7e0c"
-entry = {"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}
 
 def construct_send():
-    pass
+  """"""
+  global tokens
+  global entries
 
-
-"""def send(user_token:str, entry:str):
   try:
-    if user_token != None and len(entry.split()) != 0:
-      return encode_json(f'{{"token": "{user_token}", "directmessage": {entry}}}')
-    else:
-      raise DSProtocolError("Invalid entry or token type provided.")
-  except AttributeError or TypeError:
-    raise DSProtocolError("Invalid bio or token type provided.") 
-
-def new(user_token):
+    assert send(tokens[0], entries[0]).decode('utf-8') == '{"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": {"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}}'
+    assert send(tokens[1], entries[1]).decode('utf-8') == '{"token":"hLBcnWQFkVNXOCVhoVInh574xwMD+rfxCPIpNOgUPw4=", "directmessage": {"entry": "Hey!","recipient":"notjohndaniel", "timestamp": "2603420689.2928565"}}'
+    assert send(tokens[2], entries[2]).decode('utf-8') == '{"token":"N9vhv41IqIz1vTEFEsI1pnHwsDvtFYRYIfK7MLYFVXw=", "directmessage": {"entry": "yooo!","recipient":"aud", "timestamp": "2603420689.2928565"}}'
+  except Exception as ex:
+    print("construct_send() : construction : tests failed (not-intended).\n", ex)
+  else:
+    print("construct_send() : construction : tests passed (as-intended).")
+  
   try:
-    if user_token != None:
-      return encode_json(f'{{"token":"{user_token}", "directmessage": "new"}}')
-    else:
-      raise DSProtocolError("No token provided.")
-  except AttributeError or TypeError:
-    raise DSProtocolError("Invalid token type provided.") 
+    assert send(tokens[3], entries[3]).decode('utf-8') == {"token":"", "directmessage": {}}
+  except Exception as ex:
+    print("construct_send() : no token : failed (as-intended).\n")
+  else:
+    print("construct_send() : no token : tests passed (not-intended).")
+  
 
-def all(user_token):
+def construct_new():
   try:
-    if user_token != None:
-      return encode_json(f'{{"token":"{user_token}", "directmessage": "all"}}')
-    else:
-      raise DSProtocolError("No token provided.")
-  except AttributeError or TypeError:
-    raise DSProtocolError("Invalid token type provided.") 
-"""
+    assert new(tokens[0]).decode('utf-8') == '{"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": "new"}'
+    assert new(tokens[1]).decode('utf-8') == '{"token":"hLBcnWQFkVNXOCVhoVInh574xwMD+rfxCPIpNOgUPw4=", "directmessage": "new"}'
+    assert new(tokens[2]).decode('utf-8') == '{"token":"N9vhv41IqIz1vTEFEsI1pnHwsDvtFYRYIfK7MLYFVXw=", "directmessage": "new"}'
+  except Exception as ex:
+    print("construct_new()  : construction : tests failed (not-intended).\n", ex)
+  else:
+    print("construct_new()  : construction : tests passed (as-intended).")
+  
+  try:
+    assert new(tokens[3]).decode('utf-8') == '{"token":"", "directmessage": ""}'
+  except Exception as ex:
+    print("construct_new()  : no token : tests failed (as-intended).\n", ex)
+  else:
+    print("construct_new()  : no token : tests passed (not-intended).")
+  
+  
+def construct_all():
+  try:
+    assert new(tokens[0]).decode('utf-8') == '{"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": "all"}'
+    assert new(tokens[1]).decode('utf-8') == '{"token":"hLBcnWQFkVNXOCVhoVInh574xwMD+rfxCPIpNOgUPw4=", "directmessage": "all"}'
+    assert new(tokens[2]).decode('utf-8') == '{"token":"N9vhv41IqIz1vTEFEsI1pnHwsDvtFYRYIfK7MLYFVXw=", "directmessage": "all"}'
+  except Exception as ex:
+    print("construct_all()  : construction : tests failed (not-intended).\n", ex)
+  else:
+    print("construct_all()  : construction : tests passed (as-intended).")
+  
+  try:
+    assert new(tokens[3]).decode('utf-8') == '{"token":"", "directmessage": "all"}'
+  except Exception as ex:
+    print("construct_all()  : no token : tests failed (as-intended).\n", ex)
+  else:
+    print("construct_all()  : no token : tests passed (not-intended).")
+
+
     
 
 
-def assert_all():
-    global user_token
-    try:
-        assert all(user_token).decode('utf-8') == '{"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": "all"}'
-        assert all('').decode('utf-8') == '{"token":"", "directmessage": "all"}'
-    except AssertionError as ae:
-        print(ae)
-    print("assert_all() performed.")
-
-def assert_new():
-    global user_token
-    try:
-        assert new(user_token).decode('utf-8') == {"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": "new"}
-        assert new('').decode('utf-8') == {"token":"", "directmessage": "new"}
-    except AssertionError as ae:
-        print(ae)
-    print("assert_new() performed.")
-
-def assert_send():
-    global user_token
-    global entry
-    try:
-        assert send(user_token, entry).decode('utf-8') == {"token":"450e2846-3ae1-418a-8aa6-f6ea586b7e0c", "directmessage": {"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}}
-        assert(send('', {}).decode('utf-8')) == {"token":"", "directmessage": {}}
-    except AssertionError as ae:
-        print(ae)
-    print("assert_send() performed.")
-
-def test(func1, func2, func3):
-    func1()    
-    func2()   
-    func3()
-
 if __name__ == "__main__":
-    test(assert_all, assert_new, assert_send)
+  # construct_send()
+  construct_new()
+  construct_all()

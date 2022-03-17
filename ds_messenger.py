@@ -1,19 +1,23 @@
-# John Daniel Norombaba
-# jnoromba@uci.edu
-# 91483000
-#
 # Audrey Nguyen
 # audrehn3@uci.edu
 # 50253773
 #
+# John Daniel Norombaba
+# jnoromba@uci.edu
+# 91483000
+#
 # ds_messenger.py
-# Handles sending and receiving messages and DirectMessenger class.
+# Manages sending and recieving messages from and to a DSU server.
+#
+# ICS 32 Winter 2022
+# Final Exam: Chatting with Friends
 
 import socket, time
-import ds_protocol
-from ds_protocol import DSProtocolError
+import ds_message_protocol
+from ds_message_protocol import DSProtocolError
 
 class DirectMessage:
+  """Holds DirectMessages."""
   def __init__(self):
     self.recipient = None
     self.message = None
@@ -43,7 +47,7 @@ class DirectMessenger:
       client.connect((self.dsuserver, 3021))
       client.send(protocol)
       # Return the server's response.
-      return ds_protocol.extract_json(client.recv(4096))
+      return ds_message_protocol.extract_json(client.recv(4096))
     except socket.error or socket.timeout:
       # Handle communication errors with socket.
       raise DirectMessengerError("There was a problem communicating with the DSU Server.")
@@ -74,7 +78,7 @@ class DirectMessenger:
     if self.token != None:
       return
     try:
-      data = self._communicate(ds_protocol.join(self.username, self.password))
+      data = self._communicate(ds_message_protocol.join(self.username, self.password))
       self._validate('token', data)
       self.token = data.response['token']
     except DirectMessengerError as dme:
@@ -83,11 +87,12 @@ class DirectMessenger:
       print(dpe)
 
   def send(self, message:str, recipient:str) -> bool:
-    """INSERT DESCRIPTION HERE."""
+    """Send a message over a dsuserver."""
     try:
       self._login()
-      entry = f'{{"entry": "{message}", "recipient": "{recipient}", "timestamp": {time.time()}}}'
-      response = self._communicate(ds_protocol.send(self.token, entry))
+      entry:str = f'{{"entry": "{message}", "recipient": "{recipient}", "timestamp": {time.time()}}}'
+      """Construct an entry based on the send arguments."""
+      response = self._communicate(ds_message_protocol.send(self.token, entry))
       self._validate('send', response)
       return True
     except DirectMessengerError as dme:
@@ -98,10 +103,10 @@ class DirectMessenger:
       return False
 
   def retrieve_new(self) -> list:
-    """INSERT DESCRIPTION HERE."""
+    """Retrieve new messags."""
     try:
       self._login()
-      data = self._communicate(ds_protocol.new(self.token))
+      data = self._communicate(ds_message_protocol.new(self.token))
       self._validate('messages', data)
       return data.messages
     except DirectMessengerError as dme:
@@ -110,10 +115,10 @@ class DirectMessenger:
       print(dpe)
 
   def retrieve_all(self) -> list:
-    """INSERT DESCRIPTION HERE."""
+    """Retrieve all messages."""
     try:
       self._login()
-      data = self._communicate(ds_protocol.all(self.token))
+      data = self._communicate(ds_message_protocol.all(self.token))
       self._validate('messages', data)
       return data.messages
     except DirectMessengerError as dme:
