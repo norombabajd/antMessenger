@@ -11,8 +11,46 @@
 
 from ds_protocol import send, all, new
 
+token = ""
+entries = ""
+
+
 user_token = "450e2846-3ae1-418a-8aa6-f6ea586b7e0c"
 entry = {"entry": "Hello World!","recipient":"ohhimark", "timestamp": "1603167689.3928561"}
+
+def construct_send():
+    pass
+
+
+"""def send(user_token:str, entry:str):
+  try:
+    if user_token != None and len(entry.split()) != 0:
+      return encode_json(f'{{"token": "{user_token}", "directmessage": {entry}}}')
+    else:
+      raise DSProtocolError("Invalid entry or token type provided.")
+  except AttributeError or TypeError:
+    raise DSProtocolError("Invalid bio or token type provided.") 
+
+def new(user_token):
+  try:
+    if user_token != None:
+      return encode_json(f'{{"token":"{user_token}", "directmessage": "new"}}')
+    else:
+      raise DSProtocolError("No token provided.")
+  except AttributeError or TypeError:
+    raise DSProtocolError("Invalid token type provided.") 
+
+def all(user_token):
+  try:
+    if user_token != None:
+      return encode_json(f'{{"token":"{user_token}", "directmessage": "all"}}')
+    else:
+      raise DSProtocolError("No token provided.")
+  except AttributeError or TypeError:
+    raise DSProtocolError("Invalid token type provided.") 
+"""
+    
+
 
 def assert_all():
     global user_token

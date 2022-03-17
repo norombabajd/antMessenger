@@ -6,21 +6,14 @@
 # jnoromba@uci.edu
 # 91483000
 #
-# zotMessenger.py
-# Constructs messenging window and sends and receives messages. 
+# antMessenger.py
+#
+# Anteaters Networking through Technology Messenger or antMessenger for short.
+# The main application containing the UI and functions to send and recieve messages from a DSU Server.
 
-# TODO: 
-#   - Fix light and dark mode elements (start on light mode and not default), repetitive code
-#   - Figure out a better way to handle new messages / notifications (maybe a yellow footer?)
-#   - Continue to annotate code for pddoc
-#   - Error handling in the footer (and console?), except errors into footer.
-#   - Change variable names (PUSH THEN DO LAST TO PREVENT BREAKING CODE)
-#   - CREATE TEST_... (or recreate)
-#   - README, sources
-
+import time
 import tkinter as tk
 from tkinter import TclError, ttk, filedialog
-from turtle import back
 from Profile import Profile, Message, DsuFileError, DsuProfileError
 from ds_messenger import DirectMessenger, DirectMessengerError
 
@@ -40,27 +33,28 @@ class Body(tk.Frame):
         self._draw()
     
     def node_select(self, event):
-        """Update the messages_view with the full post entry when the corresponding node in the posts_tree is selected."""
+        """Update the thread_view with the full post entry when the corresponding node in the posts_tree is selected."""
         # Clear the message view, set the current contact from the selected node, and populate the thread.
         self.clear_message_view()
         self._contact = self.posts_tree.item(self.posts_tree.selection()[0], option='text')
         self.populate_thread(self._threads[self._contact])
+ 
 
     def get_text_entry(self) -> str:
-        """Returns the text that is currently displayed in the messages_view widget."""
-        self.messages_view.configure(state=tk.NORMAL)
-        return self.messages_view.get('1.0', 'end').rstrip()
+        """Returns the text that is currently displayed in the thread_view widget."""
+        self.thread_view.configure(state=tk.NORMAL)
+        return self.thread_view.get('1.0', 'end').rstrip()
         
     def clear_text_entry(self):
-        """Clears the text displayed in the entry_editor widget."""
-        self.entry_editor.delete('0.0', 'end')
+        """Clears the text displayed in the text_box widget."""
+        self.text_box.delete('0.0', 'end')
 
     def clear_message_view(self):
-        """Clears the text in the messages_view widget."""
-        # Enabling messages_view is required to perform changes to the widget.
-        self.messages_view.configure(state=tk.NORMAL)
-        self.messages_view.delete('0.0', 'end')
-        self.messages_view.configure(state=tk.DISABLED)
+        """Clears the text in the thread_view widget."""
+        # Enabling thread_view is required to perform changes to the widget.
+        self.thread_view.configure(state=tk.NORMAL)
+        self.thread_view.delete('0.0', 'end')
+        self.thread_view.configure(state=tk.DISABLED)
 
     def insert_msg(self, text:str, tag:str):
         """ 
@@ -69,11 +63,11 @@ class Body(tk.Frame):
         :text: Text to be inserted, derived from a Message or dict.
         :tag: 'sent' or 'recieved', respectivly aligns text left or right.
         """
-        # Enabling messages_view is required to perform changes to the widget.
-        self.messages_view.configure(state=tk.NORMAL)
-        self.messages_view.insert('end', text, (tag))
-        self.messages_view.insert('end', "\n")
-        self.messages_view.configure(state=tk.DISABLED)
+        # Enabling thread_view is required to perform changes to the widget.
+        self.thread_view.configure(state=tk.NORMAL)
+        self.thread_view.insert('end', text, (tag))
+        self.thread_view.insert('end', "\n")
+        self.thread_view.configure(state=tk.DISABLED)
 
     def populate_thread(self, thread:list):
         """
@@ -89,36 +83,37 @@ class Body(tk.Frame):
             if 'from' in msg:
                 # Align text to the left.
                 self.insert_msg(msg['message'], 'recieved')
-        self.messages_view.update()
+        self.thread_view.update()
     
     def populate_thread_tree(self, username, threads:dict):
         """Populates self._posts with conversations from the active Profile."""
         self._username:str = username
-        """INSERT DESCRIPTION HERE."""
+        """Stores the current profile's username."""
         self._threads:dict = threads
-        """INSERT DESCRIPTION HERE."""
+        """Stores the current profile's conversations."""
+        
         for id, user in enumerate(self._threads):
-            """INSERT DESCRIPTION HERE."""
-            self.posts_tree.insert('', id, id, text=user)    
+            # Insert each local thread onto the tree.
+            self.posts_tree.insert('', id, id, text=user)
 
     def reset_ui(self):
         """Resets all UI widgets to their default state."""
         self.clear_message_view()
         self.clear_text_entry()
-        self.messages_view.configure(state=tk.NORMAL)
+        self.thread_view.configure(state=tk.NORMAL)
         self._threads = {}
-        for item in self.posts_tree.get_children():
-            self.posts_tree.delete(item)
+        for itm in self.posts_tree.get_children():
+            self.posts_tree.delete(itm)
     
-    anteater = """
-       _.---._    /\\\\
-    ./'       "--'\//
-  ./              o \\
- /./\  )______   \__ \\
-./  / /\ \   | \ \  \ \\
-   / /  \ \  | |\ \  \\7
-"     "    "  "
-        """
+    anteater:str = """
+          _.---._    /\\\\
+        ./'       "--'\//
+      ./              o \\
+     /./\  )______   \__ \\
+    ./  / /\ \   | \ \  \ \\
+       / /  \ \  | |\ \  \\7
+      "     "    "  " """
+    """An ACSII Anteater generated from ThomasPericoi/ACSIIPrinter on GitHub."""
 
     def _draw(self):
         """ Add widgets to the frame upon initialization, call only once."""
@@ -129,57 +124,52 @@ class Body(tk.Frame):
         self.posts_tree = ttk.Treeview(self.posts_frame, show=('tree'))
         """Create a Treeview widget that will store a user's contacts."""
         self.posts_tree.bind("<<TreeviewSelect>>", self.node_select)
-        self.posts_tree.tag_configure('new', foreground='red')
         self.posts_tree.pack(fill=tk.BOTH, side=tk.TOP, expand=True, padx=5, pady=5)
 
         self.style:ttk.Style = ttk.Style()
         """Establish the Treeview widget's style."""
         self.style.theme_use('clam')
 
-        self.entry_frame:tk.Frame = tk.Frame(master=self, bg="")
+        self.thread_frame:tk.Frame = tk.Frame(master=self, bg="")
         """INSERT DESCRIPTION HERE."""
-        self.entry_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
+        self.thread_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         
-        self.editor_frame:tk.Frame = tk.Frame(master=self.entry_frame, bg="white")
+        self.text_frame:tk.Frame = tk.Frame(master=self.thread_frame, bg="white")
         """INSERT DESCRIPTION HERE."""
-        self.editor_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        self.text_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         
-        self.entry_editor:tk.Text = tk.Text(self.editor_frame, width=0, height=3, state=tk.DISABLED)
+        self.text_box:tk.Text = tk.Text(self.text_frame, width=0, height=3, state=tk.DISABLED, bg="white", foreground="black")
         """INSERT DESCRIPTION HERE."""
-        self.entry_editor.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=5, pady=5)
+        self.text_box.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False, padx=5, pady=5)
         
-        self.scroll_frame:tk.Frame = tk.Frame(master=self.entry_frame, bg="", width=10)
+        self.scroll_frame:tk.Frame = tk.Frame(master=self.thread_frame, bg="white", width=10)
         """INSERT DESCRIPTION HERE."""
         self.scroll_frame.pack(fill=tk.BOTH, side=tk.LEFT, expand=False)
 
-        self.messages_view:tk.Text = tk.Text(self.editor_frame, width=0, state=tk.DISABLED)
+        self.thread_view:tk.Text = tk.Text(self.text_frame, width=0, state=tk.DISABLED, bg="white", foreground="black")
         """INSERT DESCRIPTION HERE."""
-        self.messages_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
+        self.thread_view.pack(fill=tk.BOTH, side=tk.LEFT, expand=True, padx=5, pady=5)
         
-        self.messages_view.tag_configure(tagName='sent', justify='right')
-        self.messages_view.tag_configure(tagName='recieved', justify='left')
-        self.messages_view.tag_configure(tagName='heading', justify='center')
+        self.thread_view.tag_configure(tagName='sent', justify='right')
+        self.thread_view.tag_configure(tagName='recieved', justify='left')
+        self.thread_view.tag_configure(tagName='heading', justify='center')
 
         self.insert_msg(f"\nWelcome to antMessenger! Let's get started.\nOpen or create a profile by navigating to File in the menu bar.\n\n{self.anteater}", 'heading')
 
-        self.messages_view_scrollbar:tk.Scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.messages_view.yview)
+        self.thread_view_scrollbar:tk.Scrollbar = tk.Scrollbar(master=self.scroll_frame, command=self.thread_view.yview)
         """INSERT DESCRIPTION HERE."""
-        self.messages_view['yscrollcommand'] = self.messages_view_scrollbar.set
-        self.messages_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
+        self.thread_view['yscrollcommand'] = self.thread_view_scrollbar.set
+        self.thread_view_scrollbar.pack(fill=tk.Y, side=tk.LEFT, expand=False, padx=0, pady=0)
 
 class Footer(tk.Frame):
     """A subclass of tk.Frame that draws widgets in the footer portion of the root frame."""
     def __init__(self, root, send_callback=None, add_callback=None, mode_callback=None):
-        """ Initializes root, send_callback, add_callback, mode_callback, is_online, and light_mode class attributes. """
+        """ Initializes root, send_callback, add_callback, mode_callback class attributes. """
         tk.Frame.__init__(self, root)
         self.root = root
         self._send_callback = send_callback
         self._add_callback = add_callback
         self._mode_callback = mode_callback
-        self.is_online:tk.IntVar = tk.IntVar()
-        """INSERT DESCRIPTION HERE."""
-        self.light_mode:tk.IntVar = tk.IntVar()
-        """INSERT DESCRIPTION HERE."""
         self._draw()
         
     def send_click(self):
@@ -193,7 +183,7 @@ class Footer(tk.Frame):
             self._add_callback()
     
     def mode_click(self):
-        """Calls the change_mode function when the mode_btn is clicked."""
+        """Calls the toggle_appearance function when the mode_btn is clicked."""
         if self._mode_callback is not None:
             self._mode_callback()
 
@@ -223,7 +213,7 @@ class antMessenger(tk.Frame):
         self.root = root
         self._is_online:bool = False
         """INSERT DESCRIPTION HERE."""
-        self._light_mode:bool = True
+        self._appearance:bool = True
         """INSERT DESCRIPTION HERE."""
         self._profile_filename:str = None
         """INSERT DESCRIPTION HERE."""
@@ -239,12 +229,17 @@ class antMessenger(tk.Frame):
         # into the root frame
         self._draw()
 
+    def close(self):
+        """Closes the program when the 'Close' menu item is clicked."""
+        self.root.destroy()
+
     def new_profile(self):
         """Create a new DSU file when the 'New' menu item is clicked."""
         try:
             filename = tk.filedialog.asksaveasfile(filetypes=[('Distributed Social Profile', '*.dsu')])
             self.profile_filename = filename.name
-            self._current_profile = Profile()
+            self._current_profile = Profile(dsuserver='168.235.86.101', username='notjohndaniel', password='zotzot9148')
+            self._messenger = DirectMessenger(dsuserver='168.235.86.101', username='notjohndaniel', password='zotzot9148')
             self._current_profile.save_profile(self.profile_filename)
             self.body.reset_ui()
             self.footer.set_status("Ready.")
@@ -254,12 +249,11 @@ class antMessenger(tk.Frame):
     
     def open_profile(self, filename=None):
         """Open and load an existing DSU file when the 'Open' menu item is clicked."""
-        self.body.clear_message_view()
-
         if filename == None:
             # Prompt the user if a file is not provided (non-TclError).
             filename = tk.filedialog.askopenfile(filetypes=[('Distributed Social Profile', '*.dsu')])
-        
+            self._current_profile = Profile()
+            
         try:
             # Open and load the profile.
             self.profile_filename = filename.name
@@ -269,39 +263,24 @@ class antMessenger(tk.Frame):
             # Update the UI.
             self.footer.send_btn.configure(state=tk.NORMAL)
             self.footer.new_btn.configure(state=tk.NORMAL)
-            self.body.entry_editor.configure(state=tk.NORMAL)
+            self.body.text_box.configure(state=tk.NORMAL)
             self.footer.set_status(f"Welcome back.")
-            main.after(5000, antM.retrieve_messages)
+            # main.after(5000, antM.retrieve_messages)
             # Set changes.
             self.update()
         except AttributeError:
             # When a user does not open a profile.
-            self.footer.set_status("Open profile action aborted.")
-        except TclError:
-            # When a profile is already open, reset the UI and re-open.
+            self.footer.set_status("Open action aborted.")
+            time.sleep(2)
+            self.footer.set_status("Ready.")
+        except TclError as t:
+            # When a profile is _children():
             self.body.reset_ui()
-            self.open_profile(filename=filename)
+            self.open_profile(filename)
         except DsuProfileError:
             # When a user attempts to open a legacy or corrupted '.dsu' profile.
             self.footer.set_status("Corrupted or unsupported Profile.")
 
-    def close(self):
-        """ Closes the program when the 'Close' menu item is clicked. """
-        self.root.destroy()
-
-    def send_message(self):
-        """ Saves the text currently in the messages_view widget to the active DSU file. """
-        message = self.body.entry_editor.get('0.0', 'end').rstrip()
-        
-        if self._messenger.send(message, self.body._contact):
-            self.body.insert_msg(message, 'sent')
-            self._current_profile.store_sent(Message(self.body._contact, message))
-            self._current_profile.save_profile(self.profile_filename)
-            self.footer.set_status("Message sent!")
-            self.body.clear_text_entry()
-        else:
-            self.footer.set_status("There was a problem, check your internet connection.")
-        self.update()
 
     def new_conversation(self):
         """ Creates a new window to add a new contact. """
@@ -311,7 +290,7 @@ class antMessenger(tk.Frame):
         self.info = tk.Label(master=add_window, text="Enter their username below!", justify='center')
         self.info.pack(fill=tk.BOTH, side=tk.TOP, padx=10, pady=10)
         
-        self.add = tk.Button(add_window, text="Add Anteater", width=5, command=self.add_user)
+        self.add = tk.Button(add_window, text="Add Anteater", width=5, command=self.add_contact)
         self.add.pack(fill=tk.BOTH, side=tk.BOTTOM, padx=5, pady=5)
 
         self.user = tk.Text(add_window, width=0, height=1,)
@@ -325,7 +304,7 @@ class antMessenger(tk.Frame):
         add_window.minsize(add_window.winfo_width(), add_window.winfo_height())
         add_window.maxsize(add_window.winfo_width(), add_window.winfo_height())
 
-    def add_user(self):
+    def add_contact(self):
         """ Obtains name of contact from user, creates a new profile, & adds to treeview. """
         try:
             id = len(self.body._threads) + 1
@@ -341,30 +320,51 @@ class antMessenger(tk.Frame):
             self.footer.set_status("Profile creation aborted.")
 
         self.body.posts_tree.insert('', id, id, text=new_contact)
+
+        try:
+            pass
+        except:
+            pass
+
         self.body.update()
 
-    def change_mode(self):
-        """ Allows user to toggle between dark mode and light mode. """
-        if self._light_mode is True:
-            self.body.messages_view.configure(bg="#242526", foreground="white")
-            self.body.posts_frame.configure(bg="black")
-            self.body.editor_frame.configure(bg="black")
-            self.body.entry_frame.configure(bg="black")
-            self.body.entry_editor.configure(bg="#242526", foreground="white", state=tk.NORMAL)
-            self.body.style.configure('Treeview', background="#242526", foreground="white", fieldbackground="#242526")
-            self.body.scroll_frame.configure(background="black")
-            self.body.messages_view_scrollbar.configure(background="black")
-            self._light_mode = False
+    def send_message(self):
+        """ Saves the text currently in the thread_view widget to the active DSU file. """
+        message = self.body.text_box.get('0.0', 'end').rstrip()
+        if self._messenger.send(message, self.body._contact):
+            self.body.insert_msg(message, 'sent')
+            self._current_profile.store_sent(Message(self.body._contact, message))
+            self._current_profile.save_profile(self.profile_filename)
+            self.footer.set_status("Message sent!")
+            self.body.clear_text_entry()
+        else:
+            self.footer.set_status("There was a problem, check your internet connection.")
+        self.update()
 
-        elif self._light_mode is False:
-            self.body.messages_view.configure(bg="white", foreground="black")
-            self.body.posts_frame.configure(bg="white")
-            self.body.editor_frame.configure(bg="white")
-            self.body.entry_frame.configure(bg="white")
-            self.body.style.configure('Treeview', background="white", foreground="black", fieldbackground="white")
-            self.body.entry_editor.configure(bg="white", foreground="black")
-            self.body.scroll_frame.configure(bg='white')
-            self._light_mode = True
+    def retrieve_messages(self):
+        """INSERT DESCRIPTION HERE."""
+        inbox:list = self._messenger.retrieve_new()
+        """INSERT DESCRIPTION HERE."""
+        
+        for msg in inbox:
+            contacts = []
+            user:str = msg['from']
+            """Store the username from each recieved message."""
+            if user in self._current_profile._conversations and user in self.body._threads:
+                # Check to see if the contact is in the user's list; prevents unwanted interactions.
+                self._current_profile._conversations[user].append(msg)
+                # self.body._threads[user].append(msg)
+                if user == self.body._contact:
+                    # Insert the recieved message.
+                    self.body.insert_msg(f"\n{msg['message']}", 'recieved')
+                    contacts.append(user)
+                else:
+                    # Notify the user of a new message in a different thread.
+                    self.footer.set_status(f"New messasge from {user}.")
+                    contacts.append(user)
+
+        self.footer.set_status(f"[{len(contacts)}] new messages!")
+        self.root.after(5000, self.retrieve_messages)
     
     def after(self, ms: int, func: None = ...) -> str:
         '''
@@ -375,25 +375,17 @@ class antMessenger(tk.Frame):
         '''
         pass
 
-    def retrieve_messages(self):
-        """INSERT DESCRIPTION HERE."""
-        senders:list = []
-        """INSERT DESCRIPTION HERE."""
-        inbox:list = self._messenger.retrieve_new()
-        """INSERT DESCRIPTION HERE."""
-        print(inbox)
-        for msg in inbox:
-            user = msg['from']
-            if user in self._current_profile._conversations and user in self.body._threads:
-                senders.append(user)
-                self._current_profile._conversations[user].append(msg)
-                self.body._threads[user].append(msg)
-            if user == self.body._contact:
-                self.body.insert_msg(f"\n{msg['message']}", 'recieved')
+    def toggle_appearance(self):
+        """ Allows user to toggle between dark mode and light mode. """
         
-        self.footer.set_status("New messages.") if len(senders) > 0 else self.footer.set_status("No new messages.")
-        self.root.after(5000, self.retrieve_messages)
-            
+        self.body.style.configure('Treeview', background="#242526", foreground="white", fieldbackground="#242526") if self._appearance else self.body.style.configure('Treeview', background="white", foreground="black", fieldbackground="white")
+        self.body.thread_view.configure(bg="#242526", foreground="white") if self._appearance else self.body.thread_view.configure(bg="white", foreground="black")
+        self.body.text_box.configure(bg="#242526", foreground="white") if self._appearance else self.body.text_box.configure(bg="white", foreground="black")
+        self.body.posts_frame.configure(bg='black') if self._appearance else self.body.posts_frame.configure(bg='white')
+        self.body.text_frame.configure(bg='black') if self._appearance else self.body.text_frame.configure(bg='white')
+        self.body.thread_frame.configure(bg='black') if self._appearance else self.body.thread_frame.configure(bg='white')
+        self._appearance = not self._appearance
+
     def _draw(self):
         """ Call only once, upon initialization to add widgets to root frame. """
         # Build a menu and add it to the root frame.
@@ -409,7 +401,7 @@ class antMessenger(tk.Frame):
         self.body = Body(self.root, self._current_profile)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
 
-        self.footer = Footer(self.root, send_callback=self.send_message, add_callback=self.new_conversation, mode_callback=self.change_mode)
+        self.footer = Footer(self.root, send_callback=self.send_message, add_callback=self.new_conversation, mode_callback=self.toggle_appearance)
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
 
         self.footer.mode_btn.configure(state=tk.NORMAL)
