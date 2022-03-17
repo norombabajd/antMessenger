@@ -357,6 +357,7 @@ class antMessenger(tk.Frame):
                 if user == self.body._contact:
                     # Insert the recieved message.
                     self.body.insert_msg(f"{msg['message']}\n", 'recieved')
+                    self.footer.set_status(f"New message from {user}")
                 else:
                     self.footer.set_status(f"New message from {user}")
         
