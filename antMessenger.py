@@ -253,6 +253,7 @@ class antMessenger(tk.Frame):
             # Prompt the user if a file is not provided (non-TclError).
             filename = tk.filedialog.askopenfile(filetypes=[('Distributed Social Profile', '*.dsu')])
             self._current_profile = Profile()
+            self._messenger = DirectMessenger()
             
         try:
             # Open and load the profile.
@@ -265,7 +266,7 @@ class antMessenger(tk.Frame):
             self.footer.new_btn.configure(state=tk.NORMAL)
             self.body.text_box.configure(state=tk.NORMAL)
             self.footer.set_status(f"Welcome back.")
-            # main.after(5000, antM.retrieve_messages)
+            main.after(5000, antM.retrieve_messages)
             # Set changes.
             self.update()
         except AttributeError:
@@ -274,12 +275,14 @@ class antMessenger(tk.Frame):
             time.sleep(2)
             self.footer.set_status("Ready.")
         except TclError as t:
-            # When a profile is _children():
+            # Replace an active profile with a new file.
             self.body.reset_ui()
             self.open_profile(filename)
         except DsuProfileError:
             # When a user attempts to open a legacy or corrupted '.dsu' profile.
             self.footer.set_status("Corrupted or unsupported Profile.")
+            time.sleep(2)
+            self.footer.set_status("Ready.")
 
 
     def new_conversation(self):
@@ -347,23 +350,17 @@ class antMessenger(tk.Frame):
         """INSERT DESCRIPTION HERE."""
         
         for msg in inbox:
-            contacts = []
             user:str = msg['from']
             """Store the username from each recieved message."""
             if user in self._current_profile._conversations and user in self.body._threads:
                 # Check to see if the contact is in the user's list; prevents unwanted interactions.
                 self._current_profile._conversations[user].append(msg)
-                # self.body._threads[user].append(msg)
                 if user == self.body._contact:
                     # Insert the recieved message.
                     self.body.insert_msg(f"\n{msg['message']}", 'recieved')
-                    contacts.append(user)
                 else:
-                    # Notify the user of a new message in a different thread.
-                    self.footer.set_status(f"New messasge from {user}.")
-                    contacts.append(user)
-
-        self.footer.set_status(f"[{len(contacts)}] new messages!")
+                    self.footer.set_status(f"New message from {user}")
+        
         self.root.after(5000, self.retrieve_messages)
     
     def after(self, ms: int, func: None = ...) -> str:
