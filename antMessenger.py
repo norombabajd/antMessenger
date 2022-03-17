@@ -388,9 +388,6 @@ class antMessenger(tk.Frame):
                 senders.append(user)
                 self._current_profile._conversations[user].append(msg)
                 self.body._threads[user].append(msg)
-                
-                self.body.posts_tree.item(self.body._contact, tags=('new'))
-
             if user == self.body._contact:
                 self.body.insert_msg(f"\n{msg['message']}", 'recieved')
         
