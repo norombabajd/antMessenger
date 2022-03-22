@@ -313,7 +313,7 @@ class antMessenger(tk.Frame):
             new_contact:str = self.user.get('0.0', 'end').rstrip()
             """Store and test for the contact in the text box."""
 
-            if new_contact.split() == 1:
+            if len(new_contact.split()) == 1:
                 # Test for whitespace.
                 self._current_profile.add_contact(new_contact)
                 self.body._threads.update({new_contact:[]})

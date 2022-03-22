@@ -22,7 +22,38 @@ class DSProtocolError(Exception):
 DataTuple: namedtuple = namedtuple('DataTuple', ['response','type', 'messages'])
 """DataTuple is a namedtuple that will store responses from a DSU server."""
 
+def join(username:str, password:str) -> str:
+  """Construct and encode the join protocol."""
+  try:
+    # Test for whitespace and encode.
+    if username.split() != 0 and password.split() != 0:
+      return encode_json(f'{{"join": {{"username": "{username}","password": "{password}","token":""}}}}')
+    else:
+      raise DSProtocolError("No username or password given.")
+  except AttributeError or TypeError:
+    raise DSProtocolError("Invalid username or password provided.")
+  
+def post(user_token:str, message:str) -> str:
+  """Construct and encode the post protocol."""
+  try:
+    # Test for whitespace and encode.
+    if len(message.split()) != 0:
+      return encode_json(f'{{"token": "{user_token}", "post": {{"entry": "{message}", "timestamp": {time.time()}}}}}')
+    else:
+      raise DSProtocolError("No message provided.")
+  except AttributeError or TypeError:
+    # Tests for unsupported types or issues when calling split.
+    raise DSProtocolError("Invalid message or token type provided.")
 
+def update_bio(user_token:str, bio:str) -> str:
+  """Construct and encode the bio protocol."""
+  try:
+    if len(bio.split()) != 0:
+      msg = f'{{"token": "{user_token}", "bio": {{"entry": "{bio}", "timestamp": "1603167689.3928561"}}}}'
+      return encode_json(msg)
+  except AttributeError or TypeError:
+    raise DSProtocolError("Invalid bio or token type provided.")
+    
 def send(user_token:str, entry:str):
   """Send a directmessage to another DS user."""
   try:
