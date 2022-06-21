@@ -1,5 +1,5 @@
 # antMessenger
-**Read an overview of the [Final Exam: Chatting with Friends](https://ics32.markbaldw.in/final.html).**
+**Read an overview of [Final Exam: Chatting with Friends](https://ics32.markbaldw.in/final.html).**
 
 Final Project submission for ICS 32, taught by [Mark Baldwin](https://markbaldw.in) in Winter 2022 at the University of California, Irvine. In collaboration with [Audrey Nguyen](https://github.com/aud-dreams).
 
