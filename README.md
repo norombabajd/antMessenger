@@ -22,7 +22,8 @@ The *final-submission* branch represents a snapshot of the repository when submi
 ### License
 Please note that misuse of this code and documentation, when prohibited and/or used without attribution may constitute as plagiarism. Consult with your [school's policies on academic integrity](https://www.ics.uci.edu/ugrad/policies/Academic_Honesty). We'll leave it to [MOSS](https://yangdanny97.github.io/blog/2019/05/03/MOSS) and your instructors to deal with you. 
 
-### Miscellaneous References
+### References
+* https://ics32.markbaldw.in/index.html
 * https://tkdocs.com/tutorial/windows.html
 * https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/text-methods.html
 * https://docs.huihoo.com/tkinter/an-introduction-to-tkinter-1997/
