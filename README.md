@@ -10,7 +10,7 @@ A guide on how to use and important notes regarding antMessenger can be found on
 
 The *final-submission* branch represents a snapshot of the repository when submitted to Canvas.**
 
-### Developer Features
+### Features
 * Communication over the Internet using Mark Baldwin's proprietary DSU Server protocol through custom functions including token retrieval, and sending and receiving data wrapped in JSON.
 * Local storage of data, including messages sent and recieved in a ".dsu" file. Represented as a custom dictionary, the Profile and Message classes, within antMessenger.
 * Exception handling within developed functions, and presentation of user-errors.
